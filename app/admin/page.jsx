@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [form, setForm] = useState({
     title: "",
     category: "",
+    autor: "",
     imageUrl: "",
     description: "",
     content: "",
@@ -105,6 +106,7 @@ export default function AdminPage() {
     setForm({
       title: article.title || "",
       category: article.category || "",
+      autor: article.autor || "",
       imageUrl: article.imageUrl || "",
       description: article.description || "",
       content: article.content || "",
@@ -156,6 +158,7 @@ export default function AdminPage() {
 
     setForm({
       title: "",
+      autor: "",
       category: "",
       imageUrl: "",
       description: "",
@@ -205,7 +208,19 @@ export default function AdminPage() {
               className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
             />
           </div>
-
+          <div>
+            <label className="mb-1 block text-sm text-cite-teal-dark">
+              Autor
+            </label>
+            <input
+              type="text"
+              name="autor"
+              value={form.autor}
+              onChange={handleChange}
+              required
+              className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+            />
+          </div>
           {/* CATEGORÍA + IMAGEN */}
           <div className="grid gap-4 md:grid-cols-2">
 
@@ -313,7 +328,9 @@ export default function AdminPage() {
               <th className="px-2 py-3">
                 Título
               </th>
-
+              <th className="px-2 py-3">
+                Autor
+              </th>
               <th className="px-2 py-3">
                 Categoría
               </th>
@@ -325,6 +342,7 @@ export default function AdminPage() {
               <th className="px-2 py-3">
                 Acciones
               </th>
+
 
             </tr>
           </thead>
@@ -365,7 +383,9 @@ export default function AdminPage() {
                   <td className="px-2 py-3">
                     {article.title}
                   </td>
-
+                  <td className="px-2 py-3">
+                    {article.autor}
+                  </td>
                   <td className="px-2 py-3">
                     {article.category}
                   </td>

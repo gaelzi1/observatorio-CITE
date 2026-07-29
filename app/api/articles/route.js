@@ -27,6 +27,7 @@ export async function GET(request) {
         { title: regex },
         { description: regex },
         { category: regex },
+        {autor: regex}
       ];
     }
 
@@ -81,6 +82,7 @@ export async function POST(request) {
 
     const {
       title,
+      autor,
       description,
       content,
       category,
@@ -88,11 +90,11 @@ export async function POST(request) {
       published,
     } = body;
 
-    if (!title || !description || !content || !category) {
+    if (!title || !description || !content || !category || !autor) {
       return NextResponse.json(
         {
           message:
-            "Título, descripción, contenido y categoría son obligatorios",
+            "Título, autor, descripción, contenido y categoría son obligatorios",
         },
         { status: 400 }
       );
@@ -100,6 +102,7 @@ export async function POST(request) {
 
     const article = new Article({
       title,
+      autor,
       description,
       content,
       category,

@@ -4,6 +4,7 @@ export default function DocumentCard({
   descripcion,
   categoria,
   imageUrl,
+  autor,
 }) {
   return (
     <article className="flex gap-4 border-b border-black/5 py-6">
@@ -19,6 +20,7 @@ export default function DocumentCard({
             {categoria ? categoria.charAt(0).toUpperCase() : "N/A"}
           </div>
         )}
+        
       </div>
 
       <div>
@@ -27,6 +29,9 @@ export default function DocumentCard({
         </h3>
         <p className="mt-1 text-xs uppercase tracking-[0.2em] text-cite-teal-dark/80">
           {categoria}
+        </p> 
+        <p className="mt-2 text-sm leading-relaxed text-">
+          {autor ? `Autor: ${autor}` : "Autor desconocido"}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
           {descripcion}

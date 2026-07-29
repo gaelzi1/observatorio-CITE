@@ -236,6 +236,7 @@ export default function Biblioteca() {
             key={article._id}
             id={article._id}
             titulo={article.title}
+            autor={article.autor}
             descripcion={article.description}
             categoria={article.category}
             imageUrl={article.imageUrl}

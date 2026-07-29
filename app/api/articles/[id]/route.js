@@ -43,6 +43,7 @@ export async function PUT(request, { params }) {
       id,
       {
         title: body.title,
+        autor: body.autor,
         description: body.description,
         content: body.content,
         category: body.category,
@@ -50,7 +51,7 @@ export async function PUT(request, { params }) {
         published: body.published,
       },
       {
-        new: true,
+        new: "after"  ,
         runValidators: true,
       }
     );
