@@ -7,7 +7,7 @@ const ArticleSchema = new mongoose.Schema(
       required: true,
     },
     autor:{
-      type: String,
+      type: [String],
       required: true,
     },
     description: {

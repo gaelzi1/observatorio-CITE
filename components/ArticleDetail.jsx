@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ArticleDetailSkeleton from "./ArticleDetailSkeleton";
+import { generateAPA } from "@/lib/citations";
+
+
 
 
 export default function ArticleDetail({ id }) {
@@ -65,7 +68,7 @@ export default function ArticleDetail({ id }) {
   if (!article) {
     return null;
   }
-
+  const citation = generateAPA(article);
   const dateLabel = article.createdAt
     ? new Date(article.createdAt).toLocaleDateString("es-MX", {
         year: "numeric",
@@ -151,7 +154,13 @@ export default function ArticleDetail({ id }) {
           <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-cite-teal-dark md:text-5xl">
             {article.title}
           </h1>
-
+          <p className="mt-4 text-lg leading-relaxed text-neutral-600">
+            {article.autor && (
+              <span className="font-medium text-neutral-800">
+                Autor: {article.autor}
+              </span>
+            )}
+          </p>
           <p className="mt-6 text-lg leading-relaxed text-neutral-600">
             {article.description}
           </p>
@@ -184,12 +193,12 @@ export default function ArticleDetail({ id }) {
       {/* CONTENIDO */}
       <div className="mt-14 grid gap-10 md:grid-cols-[180px_1fr]">
         {/* SIDEBAR */}
-        <aside className="md:sticky md:top-24 md:h-fit">
+        <aside className=" md:top-24 md:h-fit">
           {article.imageUrl && (
             <img
               src={article.imageUrl}
               alt={article.title}
-              className="hidden h-32 w-full rounded-lg object-cover shadow-sm ring-1 ring-black/5 md:block"
+              className="hidden  w-full rounded-lg object-cover shadow-sm ring-1 ring-black/5 md:block"
             />
           )}
 
@@ -244,8 +253,11 @@ export default function ArticleDetail({ id }) {
             >
               {paragraph}
             </p>
+              
           ))}
         </article>
+      
+        
       </div>
     </main>
   );
