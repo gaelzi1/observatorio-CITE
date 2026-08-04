@@ -5,4 +5,5 @@ export default async function ArticlePage({ params }) {
 
   return <ArticleDetail id={id} />;
   
+  
 }
