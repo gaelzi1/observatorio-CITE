@@ -29,6 +29,10 @@ const ArticleSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    dateOfPublication: {
+      type: Date,
+      required: true,
+    },
   },
   {
     timestamps: true,

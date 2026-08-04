@@ -48,6 +48,7 @@ export async function PUT(request, { params }) {
         content: body.content,
         category: body.category,
         imageUrl: body.imageUrl,
+        dateOfPublication: body.dateOfPublication,
         published: body.published,
       },
       {

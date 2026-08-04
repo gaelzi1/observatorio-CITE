@@ -92,14 +92,15 @@ export async function POST(request) {
       content,
       category,
       imageUrl,
+      dateOfPublication,
       published,
     } = body;
 
-    if (!title || !description || !content || !category || !autor) {
+    if (!title || !description || !content || !category || !autor || autor.length === 0 || dateOfPublication === undefined) {
       return NextResponse.json(
         {
           message:
-            "Título, autor, descripción, contenido y categoría son obligatorios",
+            "Título, autor, descripción,fecha, contenido y categoría son obligatorios",
         },
         { status: 400 }
       );
@@ -112,6 +113,7 @@ export async function POST(request) {
       content,
       category,
       imageUrl: imageUrl || "",
+      dateOfPublication: dateOfPublication || new Date(),
       published: true,
     });
 

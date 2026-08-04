@@ -35,44 +35,16 @@ export default function Biblioteca() {
   useEffect(() => {
     async function loadFilters() {
       try {
-        const res = await fetch(`/api/articles?limit=1000`);
-        if (!res.ok) return;
+        const res = await fetch(`/api/categories`);
+        if (!res.ok) throw new Error("Error cargando categorías");
 
         const data = await res.json();
-        const articles = data.data || [];
-
-        const uniqueCategories = Array.from(
-          new Set(
-            articles
-              .map((a) => a.category)
-              .filter((c) => typeof c === "string" && c.trim() !== "")
-          )
-        ).sort((a, b) => a.localeCompare(b));
-
-        // El campo "autor" puede venir como string o como array de strings,
-        // y cada string puede contener varios nombres separados por coma
-        // (ej. "ELENA HENRÍQUEZ FIERRO , MARIA INÉS ZEPEDA GONZALEZ").
-        // Normalizamos todo a una lista plana de nombres individuales.
-        const toAutorList = (autor) => {
-          if (Array.isArray(autor)) return autor;
-          if (typeof autor === "string") return [autor];
-          return [];
-        };
-
-        const uniqueAutores = Array.from(
-          new Set(
-            articles
-              .flatMap((a) => toAutorList(a.autor))
-              .flatMap((nombre) =>
-                typeof nombre === "string" ? nombre.split(",") : []
-              )
-              .map((nombre) => nombre.trim())
-              .filter((nombre) => nombre !== "")
-          )
-        ).sort((a, b) => a.localeCompare(b));
-
-        setCategories(uniqueCategories);
-        setAutores(uniqueAutores);
+        
+        // Guardamos directamente la data limpia que viene del backend
+        setCategories(data.data || []);
+        
+        // NOTA: Para autores, puedes hacer un endpoint igual en /api/authors
+        // y llamarlo aquí mismo.
       } catch (err) {
         console.error("No se pudieron cargar los filtros", err);
       }

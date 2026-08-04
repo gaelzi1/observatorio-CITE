@@ -174,7 +174,9 @@ export default function ArticleCarousel() {
     if (!article) return null;
 
     return (
+     
       <article
+   
         key={key}
         className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors duration-300 hover:border-cite-teal-dark/40"
       >
@@ -279,7 +281,8 @@ export default function ArticleCarousel() {
   const slideWidth = `${100 / cardsPerView}%`;
 
   return (
-    <section className="w-full py-16">
+    <section className="w-full py-16 overflow-hidden bg-gray-100 flex flex-col items-center gap-8">
+       <h2 className="text-2xl font-bold text-cite-teal-dark">Artículos Recientes</h2>
       <div
         className="relative mx-auto max-w-7xl px-4 sm:px-6"
         onMouseEnter={() => setIsPaused(true)}

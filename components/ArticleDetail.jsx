@@ -178,31 +178,53 @@ export default function ArticleDetail({ id }) {
   )}
 
   {article.description && (
-    <p className="mx-auto max-w-2xl text-base leading-relaxed text-neutral-600 sm:text-lg">
+    <p className=" max-w-4xl text-base leading-relaxed text-neutral-600 sm:text-lg">
       {article.description}
     </p>
   )}
 
       {/* META INFO Y COMPARTIR (Fila unificada) */}
       <div className="mt-8 flex flex-col items-center justify-between gap-6 border-y border-neutral-100 py-5 sm:flex-row">
-        {/* Autor y Fecha */}
-        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-neutral-600">
-          {article.autor && (
-            <span className="font-medium text-neutral-900">
-              {article.autor}
-            </span>
-          )}
-          {article.autor && (dateLabel || readingMinutes) && (
-            <span className="hidden text-neutral-300 sm:inline">•</span>
-          )}
-          <div className="flex items-center gap-2">
-            {dateLabel && <time>{dateLabel}</time>}
-            {dateLabel && readingMinutes && (
-              <span className="text-neutral-300">•</span>
-            )}
-            {readingMinutes && <span>{readingMinutes} min de lectura</span>}
-          </div>
-        </div>
+  {/* Autor y Fecha */}
+  <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-neutral-600">
+    
+    {/* Author */}
+    {article.autor && (
+      <span className="font-medium text-neutral-900">
+        {article.autor}
+      </span>
+    )}
+    
+    {/* Bullet after author (only if other elements exist) */}
+    {article.autor && (dateLabel || readingMinutes) && (
+      <span className="hidden text-neutral-300 sm:inline">•</span>
+    )}
+    
+    {/* Date Label and Reading Minutes */}
+    <div className="flex items-center gap-2">
+      {dateLabel && <time>{dateLabel}</time>}
+      
+      {dateLabel && readingMinutes && (
+        <span className="text-neutral-300">•</span>
+      )}
+      
+      {readingMinutes && <span>{readingMinutes} min de lectura</span>}
+    </div>
+    
+    {/* Publication Date (Moved the bullet INSIDE the condition) */}
+    {article.dateOfPublication && (
+      <div className="flex items-center gap-2">
+        <span className="text-neutral-300">•</span>
+        <time dateTime={article.dateOfPublication}>
+          {new Date(article.dateOfPublication).toLocaleDateString()}
+          <span className="sr-only">Fecha de publicación</span>
+        </time>
+      </div>
+    )}
+    
+  </div>
+</div>
+
 
         {/* Botones de compartir horizontales */}
         <div className="flex items-center gap-2 relative">
@@ -245,9 +267,9 @@ export default function ArticleDetail({ id }) {
             Copiado 💾
           </span> 
         </div>
-      </div>
+     
     </header>
-
+ 
     {/* IMAGEN PRINCIPAL */}
     {article.imageUrl && (
       <figure className="mb-12 overflow-hidden rounded-2xl border border-neutral-200/60 bg-neutral-50 shadow-sm">
