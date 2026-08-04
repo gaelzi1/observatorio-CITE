@@ -10,6 +10,7 @@ export async function GET(request) {
 
     const q = searchParams.get("q")?.trim();
     const category = searchParams.get("category")?.trim();
+    const autor = searchParams.get("autor")?.trim();
     const sort = searchParams.get("sort") || "recent";
     const page = Number(searchParams.get("page")) || 1;
     const limit = Number(searchParams.get("limit")) || 6;
@@ -34,6 +35,10 @@ export async function GET(request) {
     if (category) {
       filter.category = category;
     }
+
+if (autor) {
+  filter.autor = new RegExp(autor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+}
 
     const SORT_MAP = {
       recent: { createdAt: -1 },

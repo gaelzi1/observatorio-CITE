@@ -4,6 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ArticleDetailSkeleton from "./ArticleDetailSkeleton";
 import { generateAPA } from "@/lib/citations";
+import ArticleAPA from "./ArticleAPA";
+
+
+
+const copyCitation = async () => {
+  try {
+    await navigator.clipboard.writeText(citation);
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 
 
@@ -128,137 +144,133 @@ export default function ArticleDetail({ id }) {
     },
   ];
 
-  return (
-   
-    <main className="mx-auto max-w-6xl px-6 py-10 animate-in fade-in duration-500">
-      {/* VOLVER AL INICIO */}
-     
-      <Link
-        href="/recursos-informativos"
-        className="mb-8 inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-cite-teal-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-cite-teal-dark focus-visible:ring-offset-2 rounded"
-      >
-        <span aria-hidden="true">←</span>
-        Volver al inicio
-      </Link>
+ return (
+  <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+    {/* VOLVER AL INICIO */}
+        {/* VOLVER AL INICIO */}
+<div className="mb-8 flex justify-center md:mb-10 md:justify-start">
+  <Link
+    href="/recursos-informativos"
+    className="group inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+  >
+    <span
+      aria-hidden="true"
+      className="transition-transform duration-200 group-hover:-translate-x-1"
+    >
+      ←
+    </span>
+    Volver a recursos
+  </Link>
+</div>
 
-      {/* HEADER DEL ARTÍCULO */}
-      <div className="grid gap-10 md:grid-cols-2 md:items-center">
-        {/* INFORMACIÓN */}
-        <div>
-          {article.category && (
-            <span className="inline-block rounded-full bg-cite-teal-dark px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white shadow-sm">
-              {article.category}
+{/* TÍTULO DEL ARTÍCULO */}
+{/* Se cambió "flex justify-center" por "text-center mx-auto" para que el texto de múltiples líneas no se rompa en móviles */}
+<h1 className="mx-auto max-w-4xl text-center text-3xl font-extrabold tracking-tight text-cite-teal-dark sm:text-4xl lg:text-5xl lg:leading-[1.15]">
+  {article.title}
+</h1>
+
+{/* HEADER DEL ARTÍCULO (Categoría y Descripción) */}
+<header className="mb-10 mt-6 flex flex-col items-center text-center">
+  {article.category && (
+    <span className="mb-6 inline-block rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-600">
+      {article.category}
+    </span>
+  )}
+
+  {article.description && (
+    <p className="mx-auto max-w-2xl text-base leading-relaxed text-neutral-600 sm:text-lg">
+      {article.description}
+    </p>
+  )}
+
+      {/* META INFO Y COMPARTIR (Fila unificada) */}
+      <div className="mt-8 flex flex-col items-center justify-between gap-6 border-y border-neutral-100 py-5 sm:flex-row">
+        {/* Autor y Fecha */}
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-neutral-600">
+          {article.autor && (
+            <span className="font-medium text-neutral-900">
+              {article.autor}
             </span>
           )}
-
-          <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-cite-teal-dark md:text-5xl">
-            {article.title}
-          </h1>
-          <p className="mt-4 text-lg leading-relaxed text-neutral-600">
-            {article.autor && (
-              <span className="font-medium text-neutral-800">
-                Autor: {article.autor}
-              </span>
+          {article.autor && (dateLabel || readingMinutes) && (
+            <span className="hidden text-neutral-300 sm:inline">•</span>
+          )}
+          <div className="flex items-center gap-2">
+            {dateLabel && <time>{dateLabel}</time>}
+            {dateLabel && readingMinutes && (
+              <span className="text-neutral-300">•</span>
             )}
-          </p>
-          <p className="mt-6 text-lg leading-relaxed text-neutral-600">
-            {article.description}
-          </p>
-
-          {(dateLabel || readingMinutes) && (
-            <div className="mt-5 flex items-center gap-3 text-sm text-neutral-500">
-              {dateLabel && <span>{dateLabel}</span>}
-              {dateLabel && <span className="text-neutral-300">•</span>}
-              <span>{readingMinutes} min de lectura</span>
-            </div>
-          )}
-        </div>
-
-        {/* IMAGEN PRINCIPAL */}
-        <div className="group overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5">
-          {article.imageUrl ? (
-            <img
-              src={article.imageUrl}
-              alt={article.title}
-              className="h-full min-h-[300px] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex min-h-[300px] items-center justify-center bg-neutral-100 text-neutral-400">
-              Sin imagen
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* CONTENIDO */}
-      <div className="mt-14 grid gap-10 md:grid-cols-[180px_1fr]">
-        {/* SIDEBAR */}
-        <aside className=" md:top-24 md:h-fit">
-          {article.imageUrl && (
-            <img
-              src={article.imageUrl}
-              alt={article.title}
-              className="hidden  w-full rounded-lg object-cover shadow-sm ring-1 ring-black/5 md:block"
-            />
-          )}
-
-          <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-cite-teal-dark">
-            Compartir
-          </p>
-
-          <div className="mt-3 flex gap-2">
-            {shareLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={link.label}
-                title={link.label}
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm text-white shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-cite-teal-dark focus-visible:ring-offset-2 ${link.bg}`}
-              >
-                {link.icon}
-              </a>
-            ))}
-
-            {/* COPIAR */}
-            <button
-              type="button"
-              onClick={copyLink}
-              aria-label="Copiar enlace"
-              title="Copiar enlace"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-cite-teal-dark hover:text-cite-teal-dark hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-cite-teal-dark focus-visible:ring-offset-2"
-            >
-              🔗
-            </button>
+            {readingMinutes && <span>{readingMinutes} min de lectura</span>}
           </div>
+        </div>
 
+        {/* Botones de compartir horizontales */}
+        <div className="flex items-center gap-2 relative">
+          <span className="mr-2 text-xs font-medium uppercase tracking-wider text-neutral-400">
+            Compartir
+          </span>
+          {shareLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={link.label}
+              title={link.label}
+              className={`flex h-8 w-8 items-center text-white justify-center rounded-full text-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm ${link.bg}`}
+            >
+              {link.icon}
+            </a>
+          ))}
+
+          {/* COPIAR ENLACE */}
+          <button
+            type="button"
+            onClick={copyLink}
+            aria-label="Copiar enlace"
+            title="Copiar enlace"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm"
+          >
+            🔗
+          </button>
+
+          {/* Mensaje de copiado flotante */}
           <span
             role="status"
             aria-live="polite"
-            className={`mt-2 block text-xs text-green-600 transition-opacity duration-300 ${
+            className={`absolute -top-8 right-0 rounded bg-neutral-800 px-2 py-1 text-xs text-white transition-opacity duration-200 ${
               copied ? "opacity-100" : "opacity-0"
             }`}
           >
-            Enlace copiado
-          </span>
-        </aside>
-
-        {/* ARTÍCULO */}
-        <article className="prose max-w-none">
-          {paragraphs.map((paragraph, index) => (
-            <p
-              key={index}
-              className="mb-6 text-base leading-8 text-neutral-700"
-            >
-              {paragraph}
-            </p>
-              
-          ))}
-        </article>
-      
-        
+            Copiado 💾
+          </span> 
+        </div>
       </div>
-    </main>
-  );
+    </header>
+
+    {/* IMAGEN PRINCIPAL */}
+    {article.imageUrl && (
+      <figure className="mb-12 overflow-hidden rounded-2xl border border-neutral-200/60 bg-neutral-50 shadow-sm">
+        <img
+          src={article.imageUrl}
+          alt={article.title}
+          className="aspect-[16/9] w-full object-cover transition-transform duration-700 hover:scale-105"
+        />
+      </figure>
+    )}
+
+    {/* CUERPO DEL ARTÍCULO */}
+    <article className="prose prose-neutral mx-auto max-w-none prose-p:text-lg prose-p:leading-8 prose-p:text-neutral-700">
+      {paragraphs.map((paragraph, index) => (
+        <p key={index} className="mb-6">
+          {paragraph}
+        </p>
+      ))}
+    </article>
+
+    {/* SECCIÓN CITAR ARTÍCULO (APA) */}
+     
+   {ArticleAPA && <ArticleAPA citation={citation} copied={copied} setCopied={setCopied} />}
+  </main>
+);
 }

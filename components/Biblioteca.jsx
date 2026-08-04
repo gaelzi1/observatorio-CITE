@@ -19,6 +19,8 @@ export default function Biblioteca() {
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("recent");
   const [categories, setCategories] = useState([]);
+  const [autor, setAutor] = useState("");
+  const [autores, setAutores] = useState([]);
 
   const [documentos, setDocumentos] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,27 +29,56 @@ export default function Biblioteca() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Carga la lista de categorías disponibles una sola vez, a partir
+  // Carga la lista de categorías y autores disponibles una sola vez, a partir
   // de los artículos existentes. Si tienes un endpoint dedicado
   // (p. ej. /api/categories) puedes reemplazar este bloque por ese fetch.
   useEffect(() => {
-    async function loadCategories() {
+    async function loadFilters() {
       try {
         const res = await fetch(`/api/articles?limit=1000`);
         if (!res.ok) return;
 
         const data = await res.json();
-        const unique = Array.from(
-          new Set((data.data || []).map((a) => a.category).filter(Boolean))
+        const articles = data.data || [];
+
+        const uniqueCategories = Array.from(
+          new Set(
+            articles
+              .map((a) => a.category)
+              .filter((c) => typeof c === "string" && c.trim() !== "")
+          )
         ).sort((a, b) => a.localeCompare(b));
 
-        setCategories(unique);
+        // El campo "autor" puede venir como string o como array de strings,
+        // y cada string puede contener varios nombres separados por coma
+        // (ej. "ELENA HENRÍQUEZ FIERRO , MARIA INÉS ZEPEDA GONZALEZ").
+        // Normalizamos todo a una lista plana de nombres individuales.
+        const toAutorList = (autor) => {
+          if (Array.isArray(autor)) return autor;
+          if (typeof autor === "string") return [autor];
+          return [];
+        };
+
+        const uniqueAutores = Array.from(
+          new Set(
+            articles
+              .flatMap((a) => toAutorList(a.autor))
+              .flatMap((nombre) =>
+                typeof nombre === "string" ? nombre.split(",") : []
+              )
+              .map((nombre) => nombre.trim())
+              .filter((nombre) => nombre !== "")
+          )
+        ).sort((a, b) => a.localeCompare(b));
+
+        setCategories(uniqueCategories);
+        setAutores(uniqueAutores);
       } catch (err) {
-        console.error("No se pudieron cargar las categorías", err);
+        console.error("No se pudieron cargar los filtros", err);
       }
     }
 
-    loadCategories();
+    loadFilters();
   }, []);
 
   useEffect(() => {
@@ -70,6 +101,10 @@ export default function Biblioteca() {
 
         if (category) {
           params.set("category", category);
+        }
+
+        if (autor) {
+          params.set("autor", autor);
         }
 
         const res = await fetch(`/api/articles?${params.toString()}`, {
@@ -98,7 +133,7 @@ export default function Biblioteca() {
     loadArticles();
 
     return () => controller.abort();
-  }, [search, category, sort, currentPage]);
+  }, [search, category, autor, sort, currentPage]);
 
   function handleSearch() {
     setCurrentPage(1);
@@ -116,6 +151,11 @@ export default function Biblioteca() {
     setCurrentPage(1);
   }
 
+  function handleAutorChange(value) {
+    setAutor(value);
+    setCurrentPage(1);
+  }
+
   function handleSortChange(value) {
     setSort(value);
     setCurrentPage(1);
@@ -125,11 +165,12 @@ export default function Biblioteca() {
     setQuery("");
     setSearch("");
     setCategory("");
+    setAutor("");
     setSort("recent");
     setCurrentPage(1);
   }
 
-  const hasActiveFilters = search || category || sort !== "recent";
+  const hasActiveFilters = search || category || autor || sort !== "recent";
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-10">
@@ -161,6 +202,27 @@ export default function Biblioteca() {
 
         {/* BARRA DE FILTROS */}
         <div className="flex flex-wrap items-center gap-3 border-t border-black/5 pt-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="filtro-autor" className="text-xs font-medium text-neutral-500">
+              Autor
+            </label>
+            <input
+              id="filtro-autor"
+              type="text"
+              list="autores-datalist"
+              value={autor}
+              onChange={(e) => handleAutorChange(e.target.value)}
+              placeholder="Buscar autor..."
+              className="w-48 shrink-0 rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
+            />
+            
+            <datalist id="autores-datalist" >
+              {autores.map((a) => (
+                <option key={a} value={a} />
+              ))}
+            </datalist>
+          </div>
+
           <div className="flex items-center gap-2">
             <label htmlFor="filtro-categoria" className="text-xs font-medium text-neutral-500">
               Categoría
@@ -232,15 +294,15 @@ export default function Biblioteca() {
         {!loading && !error && documentos.length > 0 && (
           <div className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
             {documentos.map((article) => (
-             <DocumentCard
-            key={article._id}
-            id={article._id}
-            titulo={article.title}
-            autor={article.autor}
-            descripcion={article.description}
-            categoria={article.category}
-            imageUrl={article.imageUrl}
-          />
+              <DocumentCard
+                key={article._id}
+                id={article._id}
+                titulo={article.title}
+                autor={article.autor}
+                descripcion={article.description}
+                categoria={article.category}
+                imageUrl={article.imageUrl}
+              />
             ))}
           </div>
         )}
