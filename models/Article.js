@@ -6,7 +6,7 @@ const ArticleSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    autor:{
+    author:{
       type: [String],
       required: true,
     },
@@ -28,6 +28,10 @@ const ArticleSchema = new mongoose.Schema(
     published: {
       type: Boolean,
       default: false,
+    },
+    dateOfPublication: {
+      type: Date,
+      required: true,
     },
   },
   {

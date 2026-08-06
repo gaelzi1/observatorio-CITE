@@ -11,10 +11,11 @@ export default function AdminPage() {
   const [form, setForm] = useState({
     title: "",
     category: "",
-    autor: "",
+    author: "",
     imageUrl: "",
     description: "",
     content: "",
+    dateOfPublication: "",
     published: false,
   });
 
@@ -106,11 +107,12 @@ export default function AdminPage() {
     setForm({
       title: article.title || "",
       category: article.category || "",
-      autor: article.autor || "",
+      author: article.author || "",
       imageUrl: article.imageUrl || "",
       description: article.description || "",
       content: article.content || "",
       published: article.published || false,
+      dateOfPublication: article.dateOfPublication ? new Date(article.dateOfPublication).toISOString().split("T")[0] : "",
     });
 
     window.scrollTo({
@@ -158,279 +160,301 @@ export default function AdminPage() {
 
     setForm({
       title: "",
-      autor: "",
+      author: "",
       category: "",
       imageUrl: "",
       description: "",
       content: "",
+      dateOfPublication: "",
       published: false,
     });
   }
 
   return (
-  <main className="min-h-screen bg-white px-6 py-6">
+    <main className="min-h-screen bg-white px-6 py-6">
 
-    <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-6xl">
 
-      {/* VOLVER */}
-      <a
-        href="/"
-        className="text-sm text-cite-teal-dark hover:underline"
-      >
-        ← Volver al listado público
-      </a>
-
-      {/* TÍTULO */}
-      <h1 className="mt-7 text-2xl font-bold text-black">
-        Administrar artículos de la Biblioteca
-      </h1>
-
-      {/* FORMULARIO */}
-      <section className="mt-6 rounded-lg bg-neutral-50 p-6">
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
+        {/* VOLVER */}
+        <a
+          href="/"
+          className="text-sm text-cite-teal-dark hover:underline"
         >
+          ← Volver al listado público
+        </a>
 
-          {/* TÍTULO */}
-          <div>
-            <label className="mb-1 block text-sm text-cite-teal-dark">
-              Título
-            </label>
+        {/* TÍTULO */}
+        <h1 className="mt-7 text-2xl font-bold text-black">
+          Administrar artículos de la Biblioteca
+        </h1>
 
-            <input
-              type="text"
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              required
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-cite-teal-dark">
-              Autor
-            </label>
-            <input
-              type="text"
-              name="autor"
-              value={form.autor}
-              onChange={handleChange}
-              required
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
-            />
-          </div>
-          {/* CATEGORÍA + IMAGEN */}
-          <div className="grid gap-4 md:grid-cols-2">
+        {/* FORMULARIO */}
+        <section className="mt-6 rounded-lg bg-neutral-50 p-6">
 
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+
+            {/* TÍTULO */}
             <div>
               <label className="mb-1 block text-sm text-cite-teal-dark">
-                Categoría
+                Título
               </label>
 
               <input
                 type="text"
-                name="category"
-                value={form.category}
+                name="title"
+                value={form.title}
                 onChange={handleChange}
-                placeholder="Ej. Orientación de las Investigaciones"
                 required
                 className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
               />
             </div>
-
             <div>
               <label className="mb-1 block text-sm text-cite-teal-dark">
-                URL de imagen (opcional)
+                Autor
               </label>
-
               <input
                 type="text"
-                name="imageUrl"
-                value={form.imageUrl}
+                name="author"
+                value={form.author}
                 onChange={handleChange}
-                placeholder="https://..."
+                required
                 className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
               />
             </div>
+            {/* CATEGORÍA + IMAGEN */}
+            <div className="grid gap-4 md:grid-cols-2">
 
-          </div>
+              <div>
+                <label className="mb-1 block text-sm text-cite-teal-dark">
+                  Categoría
+                </label>
 
-          {/* DESCRIPCIÓN */}
-          <div>
-            <label className="mb-1 block text-sm text-cite-teal-dark">
-              Descripción corta (aparece en el listado)
-            </label>
+                <input
+                  type="text"
+                  name="category"
+                  value={form.category}
+                  onChange={handleChange}
+                  placeholder="Ej. Orientación de las Investigaciones"
+                  required
+                  className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+                />
+              </div>
 
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              required
-              rows={3}
-              className="w-full resize-y rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
-            />
-          </div>
+              <div>
+                <label className="mb-1 block text-sm text-cite-teal-dark">
+                  URL de imagen (opcional)
+                </label>
 
-          {/* CONTENIDO */}
-          <div>
-            <label className="mb-1 block text-sm text-cite-teal-dark">
-              Contenido completo (aparece en la página del artículo)
-            </label>
+                <input
+                  type="text"
+                  name="imageUrl"
+                  value={form.imageUrl}
+                  onChange={handleChange}
+                  placeholder="https://..."
+                  className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+                />
+              </div>
 
-            <textarea
-              name="content"
-              value={form.content}
-              onChange={handleChange}
-              required
-              rows={7}
-              className="w-full resize-y rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
-            />
-          </div>
+            </div>
 
-          {/* BOTONES */}
-          <div className="flex gap-3 pt-4">
+            {/* DESCRIPCIÓN */}
+            <div>
+              <label className="mb-1 block text-sm text-cite-teal-dark flex justify-between">
+                <span>Descripción corta (aparece en el listado)</span>
+                {/* Opcional: Mostrarle al usuario cuántos caracteres le quedan */}
+                <span className="text-neutral-400 font-normal">
+                  {form.description?.length || 0} / 300 
+                </span>
+              </label>
 
-            <button
-              type="submit"
-              className="rounded bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
-            >
-              {editingId
-                ? "Guardar cambios"
-                : "Crear artículo"}
-            </button>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                required
+                rows={3}
+                maxLength={300} /* Límite máximo de caracteres en todo el textarea */
+                className="w-full resize-y rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+              />
+            </div>
 
-            {editingId && (
+            {/* CONTENIDO */}
+            <div>
+              <label className="mb-1 block text-sm text-cite-teal-dark">
+                Fecha de publicación
+              </label>
+
+              <input
+                type="date"
+                name="dateOfPublication"
+                value={form.dateOfPublication}
+                onChange={handleChange}
+                required
+                colspan={2}
+                className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+              />
+              <label className="mb-1 block text-sm text-cite-teal-dark">
+                Contenido completo (aparece en la página del artículo)
+              </label>
+
+              <textarea
+                name="content"
+                value={form.content}
+                onChange={handleChange}
+                required
+                rows={7}
+                className="w-full resize-y rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+              />
+            </div>
+
+            {/* BOTONES */}
+            <div className="flex gap-3 pt-4">
+
               <button
-                type="button"
-                onClick={resetForm}
-                className="rounded border border-slate-300 px-5 py-2.5 text-sm hover:bg-white"
+                type="submit"
+                className="rounded bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
               >
-                Cancelar
+                {editingId
+                  ? "Guardar cambios"
+                  : "Crear artículo"}
               </button>
-            )}
 
-          </div>
-
-        </form>
-
-      </section>
-
-      {/* TABLA */}
-      <section className="mt-10 overflow-x-auto">
-
-        <table className="w-full border-collapse text-sm">
-
-          <thead>
-            <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wide text-slate-600">
-
-              <th className="px-2 py-3">
-                Título
-              </th>
-              <th className="px-2 py-3">
-                Autor
-              </th>
-              <th className="px-2 py-3">
-                Categoría
-              </th>
-
-              <th className="px-2 py-3">
-                Publicado
-              </th>
-
-              <th className="px-2 py-3">
-                Acciones
-              </th>
-
-
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {loading ? (
-
-              <tr>
-                <td
-                  colSpan="4"
-                  className="py-8 text-center text-slate-500"
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="rounded border border-slate-300 px-5 py-2.5 text-sm hover:bg-white"
                 >
-                  Cargando...
-                </td>
+                  Cancelar
+                </button>
+              )}
+
+            </div>
+
+          </form>
+
+        </section>
+
+        {/* TABLA */}
+        <section className="mt-10 overflow-x-auto">
+
+          <table className="w-full border-collapse text-sm">
+
+            <thead>
+              <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wide text-slate-600">
+
+                <th className="px-2 py-3">
+                  Título
+                </th>
+                <th className="px-2 py-3">
+                  Autor
+                </th>
+                <th className="px-2 py-3">
+                  Categoría
+                </th>
+
+                <th className="px-2 py-3">
+                  Publicado
+                </th>
+              
+                <th className="px-2 py-3">
+                  Acciones
+                </th>
+
+
               </tr>
+            </thead>
 
-            ) : articles.length === 0 ? (
+            <tbody>
 
-              <tr>
-                <td
-                  colSpan="4"
-                  className="py-8 text-center text-slate-500"
-                >
-                  No hay artículos todavía.
-                </td>
-              </tr>
+              {loading ? (
 
-            ) : (
-
-              articles.map((article) => (
-
-                <tr
-                  key={article._id}
-                  className="border-b border-slate-200"
-                >
-
-                  <td className="px-2 py-3">
-                    {article.title}
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="py-8 text-center text-slate-500"
+                  >
+                    Cargando...
                   </td>
-                  <td className="px-2 py-3">
-                    {article.autor}
-                  </td>
-                  <td className="px-2 py-3">
-                    {article.category}
-                  </td>
-
-                  <td className="px-2 py-3">
-                    {article.published ? "Sí" : "No"}
-                  </td>
-
-                  <td className="px-2 py-3">
-
-                    <div className="flex gap-2">
-
-                      <button
-                        onClick={() => startEdit(article)}
-                        className="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
-                      >
-                        Editar
-                      </button>
-
-                      <button
-                        onClick={() => deleteArticle(article._id)}
-                        className="rounded border border-red-500 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        Eliminar
-                      </button>
-
-                    </div>
-
-                  </td>
-
                 </tr>
 
-              ))
+              ) : articles.length === 0 ? (
 
-            )}
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="py-8 text-center text-slate-500"
+                  >
+                    No hay artículos todavía.
+                  </td>
+                </tr>
 
-          </tbody>
+              ) : (
 
-        </table>
+                articles.map((article) => (
 
-      </section>
+                  <tr
+                    key={article._id}
+                    className="border-b border-slate-200"
+                  >
 
-    </div>
+                    <td className="px-2 py-3">
+                      {article.title}
+                    </td>
+                    <td className="px-2 py-3">
+                      {article.author}
+                    </td>
+                    <td className="px-2 py-3">
+                      {article.category}
+                    </td>
 
-  </main>
-);
-  
+               
+                    <td className="px-2 py-3">
+                      {article.dateOfPublication
+                        ? new Date(article.dateOfPublication).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+
+                    <td className="px-2 py-3">
+
+                      <div className="flex gap-2">
+
+                        <button
+                          onClick={() => startEdit(article)}
+                          className="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          onClick={() => deleteArticle(article._id)}
+                          className="rounded border border-red-500 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Eliminar
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                ))
+
+              )}
+
+            </tbody>
+
+          </table>
+
+        </section>
+
+      </div>
+
+    </main>
+  );
+
 }

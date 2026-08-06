@@ -1,10 +1,10 @@
 export default function DocumentCard({
   id,
-  titulo,
-  descripcion,
-  categoria,
+  title,
+  description,
+  category,
   imageUrl,
-  autor,
+  author,
 }) {
   return (
     <article className="flex gap-4 border-b border-black/5 py-6">
@@ -12,12 +12,12 @@ export default function DocumentCard({
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={titulo}
+            alt={title}
             className="h-full w-full object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-cite-teal-dark text-white">
-            {categoria ? categoria.charAt(0).toUpperCase() : "N/A"}
+            {category ? category.charAt(0).toUpperCase() : "N/A"}
           </div>
         )}
         
@@ -25,10 +25,10 @@ export default function DocumentCard({
 
       <div>
         <h3 className="text-sm font-semibold text-cite-teal-dark">
-          {titulo}
+          {title}
         </h3>
         <p className="mt-1 text-xs uppercase tracking-[0.2em] text-cite-teal-dark/80">
-          {categoria}
+          {category}
         </p> 
        <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
   <svg
@@ -47,10 +47,10 @@ export default function DocumentCard({
   </svg>
 
   <span className="font-medium text-gray-800">Autor:</span>
-  <span>{autor || "Desconocido"}</span>
+  <span>{author || "Desconocido"}</span>
 </p>
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-          {descripcion}
+          {description}
         </p>
         <a href={`/articles/${id}`} className="mt-4 inline-block text-cite-teal-dark hover:text-cite-teal-light">
           Ver artículo

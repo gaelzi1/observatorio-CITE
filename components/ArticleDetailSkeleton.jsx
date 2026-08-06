@@ -30,8 +30,8 @@ export default function ArticleDetailSkeleton() {
 
         {/* Título: Altura variable según la pantalla para emular text-3xl a lg:text-5xl */}
         <div className="w-full max-w-3xl space-y-3 sm:space-y-4">
-          <div className="h-8 w-full rounded bg-neutral-200 sm:h-10 lg:h-12" />
-          <div className="mx-auto h-8 w-4/5 rounded bg-neutral-200 sm:h-10 lg:h-12" />
+          
+        
         </div>
 
         {/* Descripción: Ocultamos la segunda línea en móviles muy pequeños si queremos, o ajustamos altura */}

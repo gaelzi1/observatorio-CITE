@@ -174,7 +174,9 @@ export default function ArticleCarousel() {
     if (!article) return null;
 
     return (
+     
       <article
+   
         key={key}
         className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors duration-300 hover:border-cite-teal-dark/40"
       >
@@ -215,7 +217,7 @@ export default function ArticleCarousel() {
 
           {/* Autor y fecha */}
           <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-xs text-gray-500">
-            <span>{article.autor || "Autor desconocido"}</span>
+            <span>{article.author || "Autor desconocido"}</span>
             {article.createdAt && (
               <span>{new Date(article.createdAt).toLocaleDateString("es-MX")}</span>
             )}
@@ -279,98 +281,105 @@ export default function ArticleCarousel() {
   const slideWidth = `${100 / cardsPerView}%`;
 
   return (
-    <section className="w-full py-16">
-      <div
-        className="relative mx-auto max-w-7xl px-4 sm:px-6"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        {/* Pista deslizante: cada tarjeta avanza su propio ancho, sin saltos de bloque */}
+    <section className="w-full overflow-hidden bg-gray-100 px-3 py-12 sm:px-4 sm:py-16 md:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-6 sm:gap-8">
+        <h2 className="px-2 text-center text-xl font-bold text-cite-teal-dark sm:text-2xl lg:text-3xl">
+          Artículos Recientes
+        </h2>
+
         <div
-          className="overflow-hidden touch-pan-y"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          className="relative w-full"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
         >
+          {/* Pista deslizante: cada tarjeta avanza su propio ancho, sin saltos de bloque */}
           <div
-            className={cx(
-              "flex -mx-2 sm:-mx-4",
-              withTransition && "transition-transform duration-500 ease-in-out motion-reduce:transition-none"
-            )}
-            style={{ transform: `translateX(-${trackIndex * (100 / cardsPerView)}%)` }}
-            onTransitionEnd={handleTransitionEnd}
+            className="overflow-hidden touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            {track.map((article, i) => (
-              <div
-                key={`${article._id}-${i}`}
-                className="flex-shrink-0 px-2 sm:px-4"
-                style={{ width: slideWidth }}
-              >
-                {renderCard(article, article._id)}
-              </div>
+            <div
+              className={cx(
+                "flex -mx-1 sm:-mx-2 md:-mx-3",
+                withTransition && "transition-transform duration-500 ease-in-out motion-reduce:transition-none"
+              )}
+              style={{ transform: `translateX(-${trackIndex * (100 / cardsPerView)}%)` }}
+              onTransitionEnd={handleTransitionEnd}
+            >
+              {track.map((article, i) => (
+                <div
+                  key={`${article._id}-${i}`}
+                  className="flex-shrink-0 px-1 sm:px-2 md:px-3"
+                  style={{ width: slideWidth }}
+                >
+                  {renderCard(article, article._id)}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Flecha anterior */}
+          <button
+            type="button"
+            onClick={previousArticle}
+            aria-label="Artículo anterior"
+            className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark sm:flex sm:p-2.5 md:-translate-x-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="h-4 w-4"
+            >
+              <path
+                d="M12 5l-5 5 5 5"
+                stroke="currentColor"
+                strokeWidth={1.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {/* Flecha siguiente */}
+          <button
+            type="button"
+            onClick={nextArticle}
+            aria-label="Siguiente artículo"
+            className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark sm:flex sm:p-2.5 md:translate-x-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="h-4 w-4"
+            >
+              <path
+                d="M8 5l5 5-5 5"
+                stroke="currentColor"
+                strokeWidth={1.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {/* Indicadores */}
+          <div className="mt-6 flex justify-center gap-2 sm:mt-8">
+            {articles.map((article, i) => (
+              <button
+                key={article._id}
+                type="button"
+                aria-label={`Ir al artículo ${i + 1}`}
+                onClick={() => goToArticle(i)}
+                className={cx(
+                  "h-2 rounded-full transition-all",
+                  i === activeDot ? "w-6 bg-cite-teal-dark" : "w-2 bg-gray-300 hover:bg-gray-400"
+                )}
+              />
             ))}
           </div>
-        </div>
-
-              {/* Flecha anterior */}
-            <button
-        type="button"
-        onClick={previousArticle}
-        aria-label="Artículo anterior"
-        className="absolute left-0 top-1/2 hidden -translate-x-4 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-2 text-cite-teal-dark transition hover:border-cite-teal-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark md:flex"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="none"
-          className="h-4 w-4"
-        >
-          <path
-            d="M12 5l-5 5 5 5"
-            stroke="currentColor"
-            strokeWidth={1.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-              {/* Flecha siguiente */}
-              <button
-        type="button"
-        onClick={nextArticle}
-        aria-label="Siguiente artículo"
-        className="absolute right-0 top-1/2 hidden translate-x-4 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-2 text-cite-teal-dark transition hover:border-cite-teal-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark md:flex"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="none"
-          className="h-4 w-4"
-        >
-          <path
-            d="M8 5l5 5-5 5"
-            stroke="currentColor"
-            strokeWidth={1.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-
-        {/* Indicadores */}
-        <div className="mt-8 flex justify-center gap-2">
-          {articles.map((article, i) => (
-            <button
-              key={article._id}
-              type="button"
-              aria-label={`Ir al artículo ${i + 1}`}
-              onClick={() => goToArticle(i)}
-              className={cx(
-                "h-2 rounded-full transition-all",
-                i === activeDot ? "w-6 bg-cite-teal-dark" : "w-2 bg-gray-300 hover:bg-gray-400"
-              )}
-            />
-          ))}
         </div>
       </div>
     </section>
