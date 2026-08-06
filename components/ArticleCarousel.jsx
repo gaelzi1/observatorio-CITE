@@ -1,9 +1,37 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 
 function cx(...args) {
   return args.filter(Boolean).join(" ");
+}
+
+// Devuelve cuántas tarjetas se ven a la vez según el viewport:
+// 1 en celular, 2 en tablet, 3 en escritorio.
+function useCardsPerView() {
+  const getValue = () => {
+    if (typeof window === "undefined") return 3;
+    if (window.matchMedia("(min-width: 1024px)").matches) return 3;
+    if (window.matchMedia("(min-width: 640px)").matches) return 2;
+    return 1;
+  };
+
+  const [cardsPerView, setCardsPerView] = useState(getValue);
+
+  useEffect(() => {
+    const mqLg = window.matchMedia("(min-width: 1024px)");
+    const mqSm = window.matchMedia("(min-width: 640px)");
+    const update = () => setCardsPerView(getValue());
+    update();
+    mqLg.addEventListener("change", update);
+    mqSm.addEventListener("change", update);
+    return () => {
+      mqLg.removeEventListener("change", update);
+      mqSm.removeEventListener("change", update);
+    };
+  }, []);
+
+  return cardsPerView;
 }
 
 export default function ArticleCarousel() {
@@ -11,31 +39,25 @@ export default function ArticleCarousel() {
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
-  const [index, setIndex] = useState(0);
-  const [anim, setAnim] = useState(null);
-  const [slideActive, setSlideActive] = useState(false);
+  const cardsPerView = useCardsPerView();
 
-  const rafRef = useRef(null);
+  // Índice dentro de la pista extendida (incluye clones al inicio/final).
+  const [trackIndex, setTrackIndex] = useState(cardsPerView);
+  const [withTransition, setWithTransition] = useState(true);
+  const trackIndexRef = useRef(trackIndex);
+  trackIndexRef.current = trackIndex;
 
   // Cargar artículos
   useEffect(() => {
     async function loadArticles() {
       try {
         const res = await fetch("/api/articles");
-
-        if (!res.ok) {
-          throw new Error("Error al cargar artículos");
-        }
+        if (!res.ok) throw new Error("Error al cargar artículos");
 
         const data = await res.json();
-
-        // Solo artículos publicados
         const publishedArticles = (data.data || [])
           .filter((article) => article.published)
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt) - new Date(a.createdAt)
-          )
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 6);
 
         setArticles(publishedArticles);
@@ -49,83 +71,183 @@ export default function ArticleCarousel() {
     loadArticles();
   }, []);
 
-  // Obtener los 3 artículos visibles
-  function getGroup(i) {
-    if (articles.length <= 3) {
-      return articles;
-    }
+  const isCarousel = articles.length > 3;
 
-    return [0, 1, 2].map(
-      (offset) => articles[(i + offset) % articles.length]
-    );
-  }
+  // Pista con clones al inicio y al final para poder "loopear" sin corte visible.
+  const track = useMemo(() => {
+    if (!isCarousel) return articles;
+    const head = articles.slice(-cardsPerView);
+    const tail = articles.slice(0, cardsPerView);
+    return [...head, ...articles, ...tail];
+  }, [articles, cardsPerView, isCarousel]);
 
-  // Cambiar de grupo
-  const goTo = useCallback(
-    (targetIndex, direction) => {
-      if (anim || articles.length <= 3) return;
+  const firstRealIndex = cardsPerView;
+  const lastRealIndex = cardsPerView + articles.length - 1;
 
-      setAnim({
-        direction,
-        targetIndex,
-      });
+  // Reubicar el punto de partida cada vez que cambia el layout (datos o breakpoint),
+  // sin animar el salto.
+  useEffect(() => {
+    if (!isCarousel) return;
+    setWithTransition(false);
+    setTrackIndex(firstRealIndex);
+  }, [isCarousel, cardsPerView, articles.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reactivar la transición un frame después de cualquier reposicionamiento instantáneo.
+  useEffect(() => {
+    if (withTransition) return;
+    const id = requestAnimationFrame(() => setWithTransition(true));
+    return () => cancelAnimationFrame(id);
+  }, [withTransition, trackIndex]);
+
+  const step = useCallback(
+    (direction) => {
+      if (!isCarousel) return;
+      setWithTransition(true);
+      setTrackIndex((i) => i + direction);
     },
-    [anim, articles.length]
+    [isCarousel]
   );
 
-  // Siguiente
-  const nextArticle = useCallback(() => {
-    goTo((index + 1) % articles.length, 1);
-  }, [goTo, index, articles.length]);
+  const nextArticle = useCallback(() => step(1), [step]);
+  const previousArticle = useCallback(() => step(-1), [step]);
 
-  // Anterior
-  const previousArticle = useCallback(() => {
-    goTo(
-      index === 0 ? articles.length - 1 : index - 1,
-      -1
-    );
-  }, [goTo, index, articles.length]);
-
-  // Activar animación
+  // Autoplay
   useEffect(() => {
-    if (!anim) return;
+    if (!isCarousel || isPaused) return;
+    const interval = setInterval(nextArticle, 5000);
+    return () => clearInterval(interval);
+  }, [isCarousel, isPaused, nextArticle]);
 
-    setSlideActive(false);
-
-    rafRef.current = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setSlideActive(true);
-      });
-    });
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [anim]);
-
-  // Cuando termina la transición
+  // Al cruzar la zona de clones, saltar de forma invisible al índice real equivalente.
   function handleTransitionEnd() {
-    if (!anim) return;
-
-    setIndex(anim.targetIndex);
-    setAnim(null);
-    setSlideActive(false);
+    if (!isCarousel) return;
+    const i = trackIndexRef.current;
+    if (i < firstRealIndex) {
+      setWithTransition(false);
+      setTrackIndex(i + articles.length);
+    } else if (i > lastRealIndex) {
+      setWithTransition(false);
+      setTrackIndex(i - articles.length);
+    }
   }
 
-  // Autoplay cada 5 segundos
-  useEffect(() => {
-    if (articles.length <= 3 || isPaused) return;
+  const goToArticle = (targetRealIndex) => {
+    if (!isCarousel) return;
+    setWithTransition(true);
+    setTrackIndex(firstRealIndex + targetRealIndex);
+  };
 
-    const interval = setInterval(() => {
+  // Swipe táctil para navegar en móvil
+  const touchStartX = useRef(null);
+  const touchDeltaX = useRef(0);
+
+  function handleTouchStart(e) {
+    if (!isCarousel) return;
+    setIsPaused(true);
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+  }
+
+  function handleTouchMove(e) {
+    if (!isCarousel || touchStartX.current === null) return;
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+  }
+
+  function handleTouchEnd() {
+    if (!isCarousel || touchStartX.current === null) return;
+    const SWIPE_THRESHOLD = 40;
+    if (touchDeltaX.current > SWIPE_THRESHOLD) {
+      previousArticle();
+    } else if (touchDeltaX.current < -SWIPE_THRESHOLD) {
       nextArticle();
-    }, 5000);
+    }
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+    setIsPaused(false);
+  }
 
-    return () => clearInterval(interval);
-  }, [
-    articles.length,
-    isPaused,
-    nextArticle,
-  ]);
+  const activeDot = isCarousel
+    ? (((trackIndex - firstRealIndex) % articles.length) + articles.length) % articles.length
+    : 0;
+
+  function renderCard(article, key) {
+    if (!article) return null;
+
+    return (
+     
+      <article
+   
+        key={key}
+        className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors duration-300 hover:border-cite-teal-dark/40"
+      >
+        {/* Imagen */}
+        <div className="h-52 overflow-hidden">
+          {article.imageUrl ? (
+            <img
+              src={article.imageUrl}
+              alt={article.title}
+              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-cite-teal-dark text-4xl font-bold text-white">
+              {article.category?.charAt(0).toUpperCase() || "A"}
+            </div>
+          )}
+        </div>
+
+        {/* Contenido */}
+        <div className="flex flex-1 flex-col p-6">
+          {/* Categoría */}
+          <div className="mb-4 flex items-center gap-2">
+            <span className="h-px w-5 bg-cite-teal-dark" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cite-teal-dark">
+              {article.category}
+            </span>
+          </div>
+
+          {/* Título */}
+          <h3 className="line-clamp-2 text-xl font-bold leading-tight text-cite-teal-dark">
+            {article.title}
+          </h3>
+
+          {/* Descripción */}
+          <p className="mt-4 line-clamp-4 text-sm leading-7 text-gray-600">
+            {article.description}
+          </p>
+
+          {/* Autor y fecha */}
+          <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-xs text-gray-500">
+            <span>{article.author || "Autor desconocido"}</span>
+            {article.createdAt && (
+              <span>{new Date(article.createdAt).toLocaleDateString("es-MX")}</span>
+            )}
+          </div>
+
+          {/* CTA */}
+          <a
+            href={`/articles/${article._id}`}
+            className="mt-6 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-cite-teal-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark"
+          >
+            Leer artículo
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transform-none"
+            >
+              <path
+                d="M4 10h12M11 5l5 5-5 5"
+                stroke="currentColor"
+                strokeWidth={1.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </a>
+        </div>
+      </article>
+    );
+  }
 
   // Loading
   if (loading) {
@@ -145,183 +267,121 @@ export default function ArticleCarousel() {
     );
   }
 
-  // Si hay 3 o menos
-  if (articles.length <= 3) {
+  // Si hay 3 o menos: grid estático, sin carrusel
+  if (!isCarousel) {
     return (
       <section className="w-full py-16">
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 px-6 md:grid-cols-3">
-          {articles.map((article, index) =>
-            renderCard(article, index, 0)
-          )}
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 sm:grid-cols-2 sm:gap-8 sm:px-6 lg:grid-cols-3">
+          {articles.map((article) => renderCard(article, article._id))}
         </div>
       </section>
     );
   }
 
-  const groupA = getGroup(index);
-
-  const groupB = anim
-    ? getGroup(anim.targetIndex)
-    : null;
-
-  const groupsOrder =
-    anim && anim.direction === -1
-      ? [groupB, groupA]
-      : [groupA, groupB].filter(Boolean);
-
-  let translate = "0%";
-
-  if (anim) {
-    if (anim.direction === 1) {
-      translate = slideActive ? "-50%" : "0%";
-    } else {
-      translate = slideActive ? "0%" : "-50%";
-    }
-  }
-
-  function renderCard(article, cardIndex, groupIndex) {
-    if (!article) return null;
-
-    const cardKey = `${article._id}-g${groupIndex}-${cardIndex}`;
-
-    return (
-      <article
-        key={cardKey}
-        className={cx(
-          "flex min-h-[390px] flex-col",
-          "bg-[#457695] p-5 text-white shadow-md",
-          "transition-shadow duration-300",
-          "hover:-translate-y-1 hover:shadow-2xl",
-          cardIndex === 0
-            ? "md:scale-105 md:shadow-xl"
-            : "md:scale-100 md:opacity-90"
-        )}
-      >
-        {/* IMAGEN */}
-        <div className="h-36 overflow-hidden rounded-md">
-          {article.imageUrl ? (
-            <img
-              src={article.imageUrl}
-              alt={article.title}
-              className="h-full w-full object-cover transition-transform duration-700 ease-out hover:scale-110"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-neutral-300 text-neutral-600">
-              Sin imagen
-            </div>
-          )}
-        </div>
-
-        {/* CONTENIDO */}
-        <div className="flex flex-1 flex-col items-center text-center">
-          <h3 className="mt-6 line-clamp-2 text-sm font-bold">
-            {article.title}
-          </h3>
-
-          <p className="mt-3 line-clamp-5 text-xs leading-relaxed text-white/90">
-            {article.description}
-          </p>
-
-          {/* AQUÍ ESTABA EL ERROR */}
-          <a
-            href={`/articles/${article._id}`}
-            className="mt-auto pt-5 text-xs underline underline-offset-4 transition-colors duration-200 hover:text-white/70"
-          >
-            Ver artículo
-          </a>
-        </div>
-      </article>
-    );
-  }
-
-  function renderDot(_, dotIndex) {
-    const isActive = dotIndex === index;
-
-    return (
-      <button
-        key={dotIndex}
-        onClick={() => {
-          if (dotIndex === index) return;
-
-          goTo(
-            dotIndex,
-            dotIndex > index ? 1 : -1
-          );
-        }}
-        aria-label={`Ir al artículo ${dotIndex + 1}`}
-        className={cx(
-          "h-2 rounded-full transition-all duration-300 ease-out",
-          isActive
-            ? "w-6 bg-cite-teal-dark"
-            : "w-2 bg-neutral-300 hover:bg-neutral-400"
-        )}
-      />
-    );
-  }
+  const slideWidth = `${100 / cardsPerView}%`;
 
   return (
-    <section
-      className="w-full py-16"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-center gap-6 px-6">
+    <section className="w-full overflow-hidden bg-gray-100 px-3 py-12 sm:px-4 sm:py-16 md:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-6 sm:gap-8">
+        <h2 className="px-2 text-center text-xl font-bold text-cite-teal-dark sm:text-2xl lg:text-3xl">
+          Artículos Recientes
+        </h2>
 
-        {/* ANTERIOR */}
-        <button
-          onClick={previousArticle}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-neutral-400 text-2xl text-neutral-600 transition-all duration-200 hover:scale-110 hover:border-cite-teal-dark hover:bg-neutral-100 hover:text-cite-teal-dark active:scale-95"
-          aria-label="Artículo anterior"
+        <div
+          className="relative w-full"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
         >
-          ←
-        </button>
-
-        {/* CARRUSEL */}
-        <div className="w-full max-w-5xl overflow-hidden">
+          {/* Pista deslizante: cada tarjeta avanza su propio ancho, sin saltos de bloque */}
           <div
-            onTransitionEnd={handleTransitionEnd}
-            className={cx(
-              "flex",
-              anim &&
-                "transition-transform duration-500 ease-in-out"
-            )}
-            style={{
-              width: anim ? "200%" : "100%",
-              transform: `translateX(${translate})`,
-            }}
+            className="overflow-hidden touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            {groupsOrder.map((group, groupIdx) => (
-              <div
-                key={groupIdx}
-                className="grid shrink-0 grid-cols-1 gap-8 md:grid-cols-3"
-                style={{
-                  width: anim ? "50%" : "100%",
-                }}
-              >
-                {group.map((article, i) =>
-                  renderCard(article, i, groupIdx)
+            <div
+              className={cx(
+                "flex -mx-1 sm:-mx-2 md:-mx-3",
+                withTransition && "transition-transform duration-500 ease-in-out motion-reduce:transition-none"
+              )}
+              style={{ transform: `translateX(-${trackIndex * (100 / cardsPerView)}%)` }}
+              onTransitionEnd={handleTransitionEnd}
+            >
+              {track.map((article, i) => (
+                <div
+                  key={`${article._id}-${i}`}
+                  className="flex-shrink-0 px-1 sm:px-2 md:px-3"
+                  style={{ width: slideWidth }}
+                >
+                  {renderCard(article, article._id)}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Flecha anterior */}
+          <button
+            type="button"
+            onClick={previousArticle}
+            aria-label="Artículo anterior"
+            className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark sm:flex sm:p-2.5 md:-translate-x-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="h-4 w-4"
+            >
+              <path
+                d="M12 5l-5 5 5 5"
+                stroke="currentColor"
+                strokeWidth={1.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {/* Flecha siguiente */}
+          <button
+            type="button"
+            onClick={nextArticle}
+            aria-label="Siguiente artículo"
+            className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark sm:flex sm:p-2.5 md:translate-x-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="h-4 w-4"
+            >
+              <path
+                d="M8 5l5 5-5 5"
+                stroke="currentColor"
+                strokeWidth={1.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {/* Indicadores */}
+          <div className="mt-6 flex justify-center gap-2 sm:mt-8">
+            {articles.map((article, i) => (
+              <button
+                key={article._id}
+                type="button"
+                aria-label={`Ir al artículo ${i + 1}`}
+                onClick={() => goToArticle(i)}
+                className={cx(
+                  "h-2 rounded-full transition-all",
+                  i === activeDot ? "w-6 bg-cite-teal-dark" : "w-2 bg-gray-300 hover:bg-gray-400"
                 )}
-              </div>
+              />
             ))}
           </div>
         </div>
-
-        {/* SIGUIENTE */}
-        <button
-          onClick={nextArticle}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-neutral-400 text-2xl text-neutral-600 transition-all duration-200 hover:scale-110 hover:border-cite-teal-dark hover:bg-neutral-100 hover:text-cite-teal-dark active:scale-95"
-          aria-label="Artículo siguiente"
-        >
-          →
-        </button>
       </div>
-
-      {/* INDICADORES */}
-      {articles.length > 3 && (
-        <div className="mt-8 flex items-center justify-center gap-2">
-          {articles.map(renderDot)}
-        </div>
-      )}
     </section>
   );
 }

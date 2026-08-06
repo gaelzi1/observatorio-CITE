@@ -10,12 +10,14 @@ export async function GET(request) {
 
     const q = searchParams.get("q")?.trim();
     const category = searchParams.get("category")?.trim();
+    const author = searchParams.get("author")?.trim();
+    const year = searchParams.get("year")?.trim();
     const sort = searchParams.get("sort") || "recent";
     const page = Number(searchParams.get("page")) || 1;
     const limit = Number(searchParams.get("limit")) || 6;
 
     const filter = {
-      published: true,
+     
     };
 
     if (q) {
@@ -27,12 +29,17 @@ export async function GET(request) {
         { title: regex },
         { description: regex },
         { category: regex },
+        {author: regex}
       ];
     }
 
     if (category) {
       filter.category = category;
     }
+    
+if (author) {
+  filter.author = new RegExp(author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+}
 
     const SORT_MAP = {
       recent: { createdAt: -1 },
@@ -41,6 +48,11 @@ export async function GET(request) {
       title_desc: { title: -1 },
     };
 
+    if (year) {
+      const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endOfYear = new Date(`${year}-12-31T23:59:59.999Z`);
+      filter.dateOfPublication = { $gte: startOfYear, $lte: endOfYear };
+    }
     const sortQuery = SORT_MAP[sort] || SORT_MAP.recent;
 
     const skip = (page - 1) * limit;
@@ -81,18 +93,20 @@ export async function POST(request) {
 
     const {
       title,
+      author,
       description,
       content,
       category,
       imageUrl,
-      published,
+      dateOfPublication,
+     
     } = body;
 
-    if (!title || !description || !content || !category) {
+    if (!title || !description || !content || !category || !author || author.length === 0 || dateOfPublication === undefined) {
       return NextResponse.json(
         {
           message:
-            "Título, descripción, contenido y categoría son obligatorios",
+            "Título, autor, descripción,fecha, contenido y categoría son obligatorios",
         },
         { status: 400 }
       );
@@ -100,11 +114,13 @@ export async function POST(request) {
 
     const article = new Article({
       title,
+      author,
       description,
       content,
       category,
       imageUrl: imageUrl || "",
-      published: true,
+      dateOfPublication: dateOfPublication || new Date(),
+    
     });
 
     const saved = await article.save();

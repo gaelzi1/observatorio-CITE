@@ -12,13 +12,16 @@ const SORT_OPTIONS = [
   { value: "title_desc", label: "Título Z-A" },
 ];
 
-export default function Biblioteca() {
+export default function Library() {
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
 
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("recent");
   const [categories, setCategories] = useState([]);
+  const [author, setAuthor] = useState("");
+  const [authors, setAuthors] = useState([]);
+  const[year,setYear] = useState("");
 
   const [documentos, setDocumentos] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,27 +30,25 @@ export default function Biblioteca() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Carga la lista de categorías disponibles una sola vez, a partir
-  // de los artículos existentes. Si tienes un endpoint dedicado
-  // (p. ej. /api/categories) puedes reemplazar este bloque por ese fetch.
+  
+   // Fetch distinct authors for the datalist
   useEffect(() => {
-    async function loadCategories() {
+    async function loadFilters() {
       try {
-        const res = await fetch(`/api/articles?limit=1000`);
-        if (!res.ok) return;
+        const res = await fetch(`/api/categories`);
+        if (!res.ok) throw new Error("Error cargando categorías");
 
         const data = await res.json();
-        const unique = Array.from(
-          new Set((data.data || []).map((a) => a.category).filter(Boolean))
-        ).sort((a, b) => a.localeCompare(b));
-
-        setCategories(unique);
+        
+        // Guardamos directamente la data limpia que viene del backend
+        setCategories(data.data || []);
+        
       } catch (err) {
-        console.error("No se pudieron cargar las categorías", err);
+        console.error("No se pudieron cargar los filtros", err);
       }
     }
 
-    loadCategories();
+    loadFilters();
   }, []);
 
   useEffect(() => {
@@ -67,9 +68,16 @@ export default function Biblioteca() {
         if (search) {
           params.set("q", search);
         }
-
+          category
         if (category) {
           params.set("category", category);
+        }
+
+        if (author) {
+          params.set("author", author);
+        }
+        if (year) {
+          params.set("year", year);
         }
 
         const res = await fetch(`/api/articles?${params.toString()}`, {
@@ -98,7 +106,7 @@ export default function Biblioteca() {
     loadArticles();
 
     return () => controller.abort();
-  }, [search, category, sort, currentPage]);
+  }, [search, category, author, sort,year, currentPage]);
 
   function handleSearch() {
     setCurrentPage(1);
@@ -116,8 +124,17 @@ export default function Biblioteca() {
     setCurrentPage(1);
   }
 
+  function handleauthorChange(value) {
+    setAuthor(value);
+    setCurrentPage(1);
+  }
+
   function handleSortChange(value) {
     setSort(value);
+    setCurrentPage(1);
+  }
+  function handleYearChange(value) {
+    setYear(value);
     setCurrentPage(1);
   }
 
@@ -125,11 +142,13 @@ export default function Biblioteca() {
     setQuery("");
     setSearch("");
     setCategory("");
+    setAuthor("");
+    setYear("");
     setSort("recent");
     setCurrentPage(1);
   }
 
-  const hasActiveFilters = search || category || sort !== "recent";
+  const hasActiveFilters = search || category || author || year || sort !== "recent";
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-10">
@@ -162,11 +181,32 @@ export default function Biblioteca() {
         {/* BARRA DE FILTROS */}
         <div className="flex flex-wrap items-center gap-3 border-t border-black/5 pt-4">
           <div className="flex items-center gap-2">
-            <label htmlFor="filtro-categoria" className="text-xs font-medium text-neutral-500">
+            <label htmlFor="author-filter" className="text-xs font-medium text-neutral-500">
+              autor
+            </label>
+            <input
+              id="author-filter"
+              type="text"
+              list="authors-datalist"
+              value={author}
+              onChange={(e) => handleauthorChange(e.target.value)}
+              placeholder="Buscar autor..."
+              className="w-48 shrink-0 rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
+            />
+            
+            <datalist id="authors-datalist" >
+              {authors.map((a) => (
+                <option key={a} value={a} />
+              ))}
+            </datalist>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="category-filter" className="text-xs font-medium text-neutral-500">
               Categoría
             </label>
             <select
-              id="filtro-categoria"
+              id="category-filter"
               value={category}
               onChange={(e) => handleCategoryChange(e.target.value)}
               className="rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
@@ -181,11 +221,11 @@ export default function Biblioteca() {
           </div>
 
           <div className="flex items-center gap-2">
-            <label htmlFor="filtro-orden" className="text-xs font-medium text-neutral-500">
+            <label htmlFor="order-filter" className="text-xs font-medium text-neutral-500">
               Ordenar por
             </label>
             <select
-              id="filtro-orden"
+              id="order-filter"
               value={sort}
               onChange={(e) => handleSortChange(e.target.value)}
               className="rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
@@ -197,6 +237,27 @@ export default function Biblioteca() {
               ))}
             </select>
           </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="year-filter" className="text-xs font-medium text-neutral-500">
+              Año
+            </label>
+            <select
+              id="year-filter"
+              value={year}
+              onChange={(e) => handleYearChange(e.target.value)}
+              className="rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
+            >
+              <option value="">Todos</option>
+              {/* Generamos los años desde el actual hacia atrás */}
+              {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+
 
           {hasActiveFilters && (
             <button
@@ -232,14 +293,15 @@ export default function Biblioteca() {
         {!loading && !error && documentos.length > 0 && (
           <div className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
             {documentos.map((article) => (
-             <DocumentCard
-            key={article._id}
-            id={article._id}
-            titulo={article.title}
-            descripcion={article.description}
-            categoria={article.category}
-            imageUrl={article.imageUrl}
-          />
+              <DocumentCard
+                key={article._id}
+                id={article._id}
+                title={article.title}
+                author={article.author}
+                description={article.description}
+                category={article.category}
+                imageUrl={article.imageUrl}
+              />
             ))}
           </div>
         )}

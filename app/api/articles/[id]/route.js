@@ -43,14 +43,16 @@ export async function PUT(request, { params }) {
       id,
       {
         title: body.title,
+        author: body.author,
         description: body.description,
         content: body.content,
         category: body.category,
         imageUrl: body.imageUrl,
+        dateOfPublication: body.dateOfPublication,
         published: body.published,
       },
       {
-        new: true,
+        new: "after"  ,
         runValidators: true,
       }
     );
