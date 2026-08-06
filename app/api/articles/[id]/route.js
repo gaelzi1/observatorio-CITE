@@ -43,7 +43,7 @@ export async function PUT(request, { params }) {
       id,
       {
         title: body.title,
-        autor: body.autor,
+        author: body.author,
         description: body.description,
         content: body.content,
         category: body.category,

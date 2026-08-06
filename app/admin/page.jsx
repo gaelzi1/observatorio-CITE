@@ -11,7 +11,7 @@ export default function AdminPage() {
   const [form, setForm] = useState({
     title: "",
     category: "",
-    autor: "",
+    author: "",
     imageUrl: "",
     description: "",
     content: "",
@@ -107,7 +107,7 @@ export default function AdminPage() {
     setForm({
       title: article.title || "",
       category: article.category || "",
-      autor: article.autor || "",
+      author: article.author || "",
       imageUrl: article.imageUrl || "",
       description: article.description || "",
       content: article.content || "",
@@ -160,7 +160,7 @@ export default function AdminPage() {
 
     setForm({
       title: "",
-      autor: "",
+      author: "",
       category: "",
       imageUrl: "",
       description: "",
@@ -217,8 +217,8 @@ export default function AdminPage() {
               </label>
               <input
                 type="text"
-                name="autor"
-                value={form.autor}
+                name="author"
+                value={form.author}
                 onChange={handleChange}
                 required
                 className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
@@ -262,8 +262,12 @@ export default function AdminPage() {
 
             {/* DESCRIPCIÓN */}
             <div>
-              <label className="mb-1 block text-sm text-cite-teal-dark">
-                Descripción corta (aparece en el listado)
+              <label className="mb-1 block text-sm text-cite-teal-dark flex justify-between">
+                <span>Descripción corta (aparece en el listado)</span>
+                {/* Opcional: Mostrarle al usuario cuántos caracteres le quedan */}
+                <span className="text-neutral-400 font-normal">
+                  {form.description?.length || 0} / 300 
+                </span>
               </label>
 
               <textarea
@@ -272,7 +276,7 @@ export default function AdminPage() {
                 onChange={handleChange}
                 required
                 rows={3}
-                cols={50} 
+                maxLength={300} /* Límite máximo de caracteres en todo el textarea */
                 className="w-full resize-y rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
               />
             </div>
@@ -355,9 +359,7 @@ export default function AdminPage() {
                 <th className="px-2 py-3">
                   Publicado
                 </th>
-                <th className="px-2 py-3">
-                  Fecha de publicación
-                </th>
+              
                 <th className="px-2 py-3">
                   Acciones
                 </th>
@@ -403,15 +405,13 @@ export default function AdminPage() {
                       {article.title}
                     </td>
                     <td className="px-2 py-3">
-                      {article.autor}
+                      {article.author}
                     </td>
                     <td className="px-2 py-3">
                       {article.category}
                     </td>
 
-                    <td className="px-2 py-3">
-                      {article.published ? "Sí" : "No"}
-                    </td>
+               
                     <td className="px-2 py-3">
                       {article.dateOfPublication
                         ? new Date(article.dateOfPublication).toLocaleDateString()

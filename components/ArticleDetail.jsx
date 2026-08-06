@@ -6,24 +6,6 @@ import ArticleDetailSkeleton from "./ArticleDetailSkeleton";
 import { generateAPA } from "@/lib/citations";
 import ArticleAPA from "./ArticleAPA";
 
-
-
-const copyCitation = async () => {
-  try {
-    await navigator.clipboard.writeText(citation);
-    setCopied(true);
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-
-
-
 export default function ArticleDetail({ id }) {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,14 +37,13 @@ export default function ArticleDetail({ id }) {
   }, [id]);
 
   if (loading) {
-  return (
-    <div className="space-y-6">
-      
-        <ArticleDetailSkeleton  />
-   
-    </div>
-  );
-}
+    return (
+      <div className="space-y-6">
+        <ArticleDetailSkeleton />
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-6 py-24 text-center">
@@ -84,6 +65,7 @@ export default function ArticleDetail({ id }) {
   if (!article) {
     return null;
   }
+
   const citation = generateAPA(article);
   const dateLabel = article.createdAt
     ? new Date(article.createdAt).toLocaleDateString("es-MX", {
@@ -106,9 +88,7 @@ export default function ArticleDetail({ id }) {
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-
       setCopied(true);
-
       setTimeout(() => {
         setCopied(false);
       }, 1800);
@@ -144,155 +124,158 @@ export default function ArticleDetail({ id }) {
     },
   ];
 
- return (
-  <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-    {/* VOLVER AL INICIO */}
-        {/* VOLVER AL INICIO */}
-<div className="mb-8 flex justify-center md:mb-10 md:justify-start">
-  <Link
-    href="/recursos-informativos"
-    className="group inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
-  >
-    <span
-      aria-hidden="true"
-      className="transition-transform duration-200 group-hover:-translate-x-1"
-    >
-      ←
-    </span>
-    Volver a recursos
-  </Link>
-</div>
+  // Respaldo: si article.author no existe, intenta leer article.autor
+  const articleAuthor = article.author || article.autor;
 
-{/* TÍTULO DEL ARTÍCULO */}
-{/* Se cambió "flex justify-center" por "text-center mx-auto" para que el texto de múltiples líneas no se rompa en móviles */}
-<h1 className="mx-auto max-w-4xl text-center text-3xl font-extrabold tracking-tight text-cite-teal-dark sm:text-4xl lg:text-5xl lg:leading-[1.15]">
-  {article.title}
-</h1>
-
-{/* HEADER DEL ARTÍCULO (Categoría y Descripción) */}
-<header className="mb-10 mt-6 flex flex-col items-center text-center">
-  {article.category && (
-    <span className="mb-6 inline-block rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-600">
-      {article.category}
-    </span>
-  )}
-
-  {article.description && (
-    <p className=" max-w-4xl text-base leading-relaxed text-neutral-600 sm:text-lg">
-      {article.description}
-    </p>
-  )}
-
-      {/* META INFO Y COMPARTIR (Fila unificada) */}
-      <div className="mt-8 flex flex-col items-center justify-between gap-6 border-y border-neutral-100 py-5 sm:flex-row">
-  {/* Autor y Fecha */}
-  <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-neutral-600">
-    
-    {/* Author */}
-    {article.autor && (
-      <span className="font-medium text-neutral-900">
-        {article.autor}
-      </span>
-    )}
-    
-    {/* Bullet after author (only if other elements exist) */}
-    {article.autor && (dateLabel || readingMinutes) && (
-      <span className="hidden text-neutral-300 sm:inline">•</span>
-    )}
-    
-    {/* Date Label and Reading Minutes */}
-    <div className="flex items-center gap-2">
-      {dateLabel && <time>{dateLabel}</time>}
-      
-      {dateLabel && readingMinutes && (
-        <span className="text-neutral-300">•</span>
-      )}
-      
-      {readingMinutes && <span>{readingMinutes} min de lectura</span>}
-    </div>
-    
-    {/* Publication Date (Moved the bullet INSIDE the condition) */}
-    {article.dateOfPublication && (
-      <div className="flex items-center gap-2">
-        <span className="text-neutral-300">•</span>
-        <time dateTime={article.dateOfPublication}>
-          {new Date(article.dateOfPublication).toLocaleDateString()}
-          <span className="sr-only">Fecha de publicación</span>
-        </time>
-      </div>
-    )}
-    
-  </div>
-</div>
-
-
-        {/* Botones de compartir horizontales */}
-        <div className="flex items-center gap-2 relative">
-          <span className="mr-2 text-xs font-medium uppercase tracking-wider text-neutral-400">
-            Compartir
-          </span>
-          {shareLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={link.label}
-              title={link.label}
-              className={`flex h-8 w-8 items-center text-white justify-center rounded-full text-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm ${link.bg}`}
-            >
-              {link.icon}
-            </a>
-          ))}
-
-          {/* COPIAR ENLACE */}
-          <button
-            type="button"
-            onClick={copyLink}
-            aria-label="Copiar enlace"
-            title="Copiar enlace"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm"
-          >
-            🔗
-          </button>
-
-          {/* Mensaje de copiado flotante */}
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+      {/* VOLVER AL INICIO */}
+      <div className="mb-8 flex justify-center md:mb-10 md:justify-start">
+        <Link
+          href="/recursos-informativos"
+          className="group inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+        >
           <span
-            role="status"
-            aria-live="polite"
-            className={`absolute -top-8 right-0 rounded bg-neutral-800 px-2 py-1 text-xs text-white transition-opacity duration-200 ${
-              copied ? "opacity-100" : "opacity-0"
-            }`}
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:-translate-x-1"
           >
-            Copiado 💾
-          </span> 
+            ←
+          </span>
+          Volver a recursos
+        </Link>
+      </div>
+
+      {/* TÍTULO DEL ARTÍCULO */}
+      <h1 className="mx-auto max-w-4xl text-center text-3xl font-extrabold tracking-tight text-cite-teal-dark sm:text-4xl lg:text-5xl lg:leading-[1.15]">
+        {article.title}
+      </h1>
+
+      {/* HEADER DEL ARTÍCULO (Categoría y Descripción) */}
+      <header className="mb-10 mt-6 flex flex-col items-center text-center">
+        {article.category && (
+          <span className="mb-6 inline-block rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-600">
+            {article.category}
+          </span>
+        )}
+
+        {article.description && (
+          <p className="max-w-4xl text-base leading-relaxed text-neutral-600 sm:text-lg">
+            {article.description}
+          </p>
+        )}
+
+        {/* META INFO Y COMPARTIR (Fila unificada) */}
+        <div className="mt-8 flex flex-col items-center justify-between gap-6 border-y border-neutral-100 py-5 sm:flex-row">
+          {/* Author y Fecha */}
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-neutral-600">
+            
+            {/* Author */}
+            {articleAuthor && (
+              <span className="font-medium text-neutral-900">
+                {articleAuthor}
+              </span>
+            )}
+
+            {/* Bullet after author (only if other elements exist) */}
+            {articleAuthor && (dateLabel || readingMinutes) && (
+              <span className="hidden text-neutral-300 sm:inline">•</span>
+            )}
+
+            {/* Date Label and Reading Minutes */}
+            <div className="flex items-center gap-2">
+              {dateLabel && <time>{dateLabel}</time>}
+
+              {dateLabel && readingMinutes && (
+                <span className="text-neutral-300">•</span>
+              )}
+
+              {readingMinutes && <span>{readingMinutes} min de lectura</span>}
+            </div>
+
+            {/* Publication Date (Moved the bullet INSIDE the condition) */}
+            {article.dateOfPublication && (
+              <div className="flex items-center gap-2">
+                <span className="text-neutral-300">•</span>
+                <time dateTime={article.dateOfPublication}>
+                  {new Date(article.dateOfPublication).toLocaleDateString()}
+                  <span className="sr-only">Fecha de publicación</span>
+                </time>
+              </div>
+            )}
+          </div>
+
+          {/* Botones de compartir horizontales */}
+          <div className="relative flex items-center gap-2">
+            <span className="mr-2 text-xs font-medium uppercase tracking-wider text-neutral-400">
+              Compartir
+            </span>
+            {shareLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                title={link.label}
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm text-white transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm ${link.bg}`}
+              >
+                {link.icon}
+              </a>
+            ))}
+
+            {/* COPIAR ENLACE */}
+            <button
+              type="button"
+              onClick={copyLink}
+              aria-label="Copiar enlace"
+              title="Copiar enlace"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm"
+            >
+              🔗
+            </button>
+
+            {/* Mensaje de copiado flotante */}
+            <span
+              role="status"
+              aria-live="polite"
+              className={`absolute -top-8 right-0 rounded bg-neutral-800 px-2 py-1 text-xs text-white transition-opacity duration-200 ${
+                copied ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              Copiado 💾
+            </span>
+          </div>
         </div>
-     
-    </header>
- 
-    {/* IMAGEN PRINCIPAL */}
-    {article.imageUrl && (
-      <figure className="mb-12 overflow-hidden rounded-2xl border border-neutral-200/60 bg-neutral-50 shadow-sm">
-        <img
-          src={article.imageUrl}
-          alt={article.title}
-          className="aspect-[16/9] w-full object-cover transition-transform duration-700 hover:scale-105"
+      </header>
+
+      {/* IMAGEN PRINCIPAL */}
+      {article.imageUrl && (
+        <figure className="mb-12 overflow-hidden rounded-2xl border border-neutral-200/60 bg-neutral-50 shadow-sm">
+          <img
+            src={article.imageUrl}
+            alt={article.title}
+            className="aspect-[16/9] w-full object-cover transition-transform duration-700 hover:scale-105"
+          />
+        </figure>
+      )}
+
+      {/* CUERPO DEL ARTÍCULO */}
+      <article className="prose prose-neutral mx-auto max-w-none prose-p:text-lg prose-p:leading-8 prose-p:text-neutral-700">
+        {paragraphs.map((paragraph, index) => (
+          <p key={index} className="mb-6">
+            {paragraph}
+          </p>
+        ))}
+      </article>
+
+      {/* SECCIÓN CITAR ARTÍCULO (APA) */}
+      {ArticleAPA && (
+        <ArticleAPA
+          citation={citation}
+          copied={copied}
+          setCopied={setCopied}
         />
-      </figure>
-    )}
-
-    {/* CUERPO DEL ARTÍCULO */}
-    <article className="prose prose-neutral mx-auto max-w-none prose-p:text-lg prose-p:leading-8 prose-p:text-neutral-700">
-      {paragraphs.map((paragraph, index) => (
-        <p key={index} className="mb-6">
-          {paragraph}
-        </p>
-      ))}
-    </article>
-
-    {/* SECCIÓN CITAR ARTÍCULO (APA) */}
-     
-   {ArticleAPA && <ArticleAPA citation={citation} copied={copied} setCopied={setCopied} />}
-  </main>
-);
+      )}
+    </main>
+  );
 }

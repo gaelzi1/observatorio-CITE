@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import ArticleCarousel from "@/components/ArticleCarousel";
 import Hero from "@/components/Hero";
-import Biblioteca from "@/components/Biblioteca";
+import Library from "@/components/Library";
 export default function Page() {
     return (
         <main >
@@ -15,7 +15,7 @@ export default function Page() {
             />
             
             <ArticleCarousel />
-            <Biblioteca />
+            <Library/>
 
             
         </main>

@@ -8,8 +8,7 @@ export async function GET() {
     // 1. Conectar a la base de datos
     await dbConnect();
 
-    // 2. Usar distinct() de MongoDB para obtener valores únicos.
-    // El filtro { $nin: [null, ""] } asegura que no traiga categorías vacías.
+    // 2. Obtener categorías únicas de los artículos publicados
     const uniqueCategories = await Article.distinct("category", { 
       category: { $nin: [null, ""] } 
     });
