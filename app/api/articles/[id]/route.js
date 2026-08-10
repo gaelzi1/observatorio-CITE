@@ -50,9 +50,10 @@ export async function PUT(request, { params }) {
         imageUrl: body.imageUrl,
         dateOfPublication: body.dateOfPublication,
         published: body.published,
+        typeOfComponent: body.typeOfComponent,
       },
       {
-        new: "after"  ,
+        new: "true",  
         runValidators: true,
       }
     );
