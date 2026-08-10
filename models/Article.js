@@ -29,14 +29,21 @@ const ArticleSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    typeOfComponent: {
+      type: String,
+      enum: ["article", "book", "thesis", "report", "other"],
+      default: "article",
+    },
     dateOfPublication: {
       type: Date,
       required: true,
     },
+    
   },
   {
     timestamps: true,
   }
+ 
 );
 
 export default mongoose.models.Article ||
