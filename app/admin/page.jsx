@@ -18,6 +18,18 @@ export default function AdminPage() {
     content: "",
     dateOfPublication: "",
     typeOfComponent: "",
+    publisher: "",
+    journalName: "",
+    volume: "",
+    pages: "",
+    edition: "",
+    degree: "",
+    institution: "",
+    reportNumber: "",
+    conferenceName: "",
+    location: "",
+    materialType: "",
+    doiOrUrl: "",
   });
 
   async function loadArticles() {
@@ -74,14 +86,32 @@ export default function AdminPage() {
     setForm({
       title: article.title || "",
       category: article.category || "",
-      author: article.author || article.autor || "",
+      
+      // 👇 Manejo seguro para que siempre sea string en el input 👇
+      author: Array.isArray(article.author)
+        ? article.author.join(", ")
+        : article.author || article.autor || "",
+
       imageUrl: article.imageUrl || "",
       description: article.description || "",
       content: article.content || "",
-      typeOfComponent: article.typeOfComponent|| "",
+      typeOfComponent: article.typeOfComponent || "",
       dateOfPublication: article.dateOfPublication
         ? new Date(article.dateOfPublication).toISOString().split("T")[0]
         : "",
+      journalName: article.journalName || "",
+      volume: article.volume || "",
+      issue: article.issue || "",
+      pages: article.pages || "",
+      publisher: article.publisher || "",
+      edition: article.edition || "",
+      degree: article.degree || "",
+      institution: article.institution || "",
+      reportNumber: article.reportNumber || "",
+      conferenceName: article.conferenceName || "",
+      location: article.location || "",
+      materialType: article.materialType || "",
+      doiOrUrl: article.doiOrUrl || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -113,6 +143,18 @@ export default function AdminPage() {
       content: "",
       dateOfPublication: "",
       typeOfComponent: "",
+      publisher: "",
+      journalName: "",
+      volume: "",
+      pages: "",
+      edition: "",
+      degree: "",
+      institution: "",
+      reportNumber: "",
+      conferenceName: "",
+      location: "",
+      materialType: "",
+      doiOrUrl: "",
     });
   }
 

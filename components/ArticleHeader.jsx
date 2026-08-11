@@ -7,6 +7,9 @@ const TYPE_LABELS = {
   book: "Libro",
   thesis: "Tesis",
   report: "Informe",
+  journal_article: "Artículo de revista",
+  educational_resource: "Recurso educativo",
+  conference_paper: "Ponencia de conferencia",
   other: "Otro",
 };
 

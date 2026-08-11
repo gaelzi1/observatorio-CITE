@@ -5,6 +5,7 @@ import DocumentCard from "./DocumentCard";
 import LibraryFilters from "./LibraryFilters";
 import LibraryPagination from "./LibraryPagination";
 
+
 const LIMIT = 6;
 
 export default function Library() {
@@ -13,6 +14,7 @@ export default function Library() {
 
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("recent");
+
   const [categories, setCategories] = useState([]);
   const [author, setAuthor] = useState("");
   const [authors, setAuthors] = useState([]);
@@ -57,11 +59,14 @@ export default function Library() {
         if (category) params.set("category", category); // <-- Error de sintaxis corregido aquí
         if (author) params.set("author", author);
         if (year) params.set("year", year);
+        if (typeFilter) {
+          params.set("typeOfComponent", typeFilter);
+        }
 
         const res = await fetch(`/api/articles?${params.toString()}`, {
           signal: controller.signal,
         });
-        if (typeFilter) params.set("typeOfComponent", typeFilter);
+       
 
         if (!res.ok) throw new Error("Error de red");
 
@@ -79,7 +84,7 @@ export default function Library() {
 
     loadArticles();
     return () => controller.abort();
-  }, [search, category, author, sort, year, currentPage]);
+  }, [search, category, author, sort, year,typeFilter, currentPage]);
 
   // Manejadores
   const handleSearch = () => { setCurrentPage(1); setSearch(query.trim()); };
@@ -90,7 +95,7 @@ export default function Library() {
   const handleYearChange = (val) => { setYear(val); setCurrentPage(1); };
   
   const clearFilters = () => {
-    setQuery(""); setSearch(""); setCategory(""); setAuthor(""); setYear(""); setSort("recent"); setCurrentPage(1);
+    setQuery(""); setSearch(""); setCategory(""); setAuthor(""); setYear(""); setSort("recent"); setTypeFilter(""); setCurrentPage(1);
   };
 
   const hasActiveFilters = search || category || author || year || sort !== "recent";
@@ -101,13 +106,17 @@ export default function Library() {
     { id: "book", label: "Libros" },
     { id: "thesis", label: "Tesis" },
     { id: "report", label: "Informes" },
+    { id: "journal_article", label: "Revistas Científicas" },
+    { id: "educational_resource", label: "Recursos Educativos" },
+    { id: "conference_paper", label: "Ponencias" },
     { id: "other", label: "Otros" },
+
   ];
 
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-10">
-      
+
+    <section className="mx-auto max-w-7xl p py-10">
       {/* =========================================
           CABECERA SUPERIOR (TÍTULO Y BUSCADOR)
           ========================================= */}
@@ -115,7 +124,7 @@ export default function Library() {
         <h2 className="text-2xl font-bold uppercase tracking-wide text-cite-teal-dark">
           Biblioteca
         </h2>
-        
+       
         <div className="flex w-full max-w-sm items-stretch overflow-hidden rounded border border-black/10 sm:w-auto">
           <input
             type="text"
@@ -134,6 +143,7 @@ export default function Library() {
           </button>
         </div>
       </div>
+ 
 
       {/* =========================================
           CONTENEDOR PRINCIPAL DE DOS COLUMNAS
