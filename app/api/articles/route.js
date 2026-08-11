@@ -13,33 +13,84 @@ export async function GET(request) {
     const author = searchParams.get("author")?.trim();
     const year = searchParams.get("year")?.trim();
     const sort = searchParams.get("sort") || "recent";
-    const page = Number(searchParams.get("page")) || 1;
-    const limit = Number(searchParams.get("limit")) || 6;
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const limit = Math.max(1, Number(searchParams.get("limit")) || 6);
+    const typeOfComponent = searchParams.get("typeOfComponent")?.trim();
 
-    const filter = {
-     
+    // Filtros adicionales para metadatos
+    const journalName = searchParams.get("journalName")?.trim();
+    const volume = searchParams.get("volume")?.trim();
+    const issue = searchParams.get("issue")?.trim();
+    const pages = searchParams.get("pages")?.trim();
+    const publisher = searchParams.get("publisher")?.trim();
+    const edition = searchParams.get("edition")?.trim();
+    const degree = searchParams.get("degree")?.trim();
+    const institution = searchParams.get("institution")?.trim();
+    const reportNumber = searchParams.get("reportNumber")?.trim();
+    const conferenceName = searchParams.get("conferenceName")?.trim();
+    const location = searchParams.get("location")?.trim();
+    const materialType = searchParams.get("materialType")?.trim();
+    const doiOrUrl = searchParams.get("doiOrUrl")?.trim();
+
+    // Helper para crear RegExp seguro
+    const makeSafeRegex = (text) => {
+      const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(escaped, "i");
     };
+    
+    const filter = {};
 
+    // Filtro por tipo de componente
+    if (typeOfComponent) {
+      if (typeOfComponent === "article") {
+        filter.typeOfComponent = { $in: ["article", null, ""] };
+      } else {
+        filter.typeOfComponent = typeOfComponent;
+      }
+    }
+
+    // Búsqueda general
     if (q) {
-      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-      const regex = new RegExp(escaped, "i");
-
+      const regex = makeSafeRegex(q);
       filter.$or = [
         { title: regex },
         { description: regex },
         { category: regex },
-        {author: regex}
+        { author: regex },
+        { journalName: regex },
+        { publisher: regex },
+        { institution: regex },
+        { conferenceName: regex },
       ];
     }
 
-    if (category) {
-      filter.category = category;
+    // Filtros estándar
+    if (category) filter.category = category;
+    if (author) filter.author = makeSafeRegex(author);
+
+    if (year) {
+      const parsedYear = Number(year);
+      if (!isNaN(parsedYear)) {
+        const startOfYear = new Date(`${parsedYear}-01-01T00:00:00.000Z`);
+        const endOfYear = new Date(`${parsedYear}-12-31T23:59:59.999Z`);
+        filter.dateOfPublication = { $gte: startOfYear, $lte: endOfYear };
+      }
     }
-    
-if (author) {
-  filter.author = new RegExp(author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-}
+
+    // Metadatos específicos
+    if (journalName) filter.journalName = makeSafeRegex(journalName);
+    if (volume) filter.volume = volume;
+    if (issue) filter.issue = issue;
+    if (pages) filter.pages = pages;
+    if (publisher) filter.publisher = makeSafeRegex(publisher);
+    if (edition) filter.edition = edition;
+    if (degree) filter.degree = makeSafeRegex(degree);
+    if (institution) filter.institution = makeSafeRegex(institution);
+    if (reportNumber) filter.reportNumber = reportNumber;
+    if (conferenceName) filter.conferenceName = makeSafeRegex(conferenceName);
+    if (location) filter.location = makeSafeRegex(location);
+    if (materialType) filter.materialType = makeSafeRegex(materialType);
+    if (doiOrUrl) filter.doiOrUrl = doiOrUrl;
 
     const SORT_MAP = {
       recent: { createdAt: -1 },
@@ -48,21 +99,15 @@ if (author) {
       title_desc: { title: -1 },
     };
 
-    if (year) {
-      const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
-      const endOfYear = new Date(`${year}-12-31T23:59:59.999Z`);
-      filter.dateOfPublication = { $gte: startOfYear, $lte: endOfYear };
-    }
     const sortQuery = SORT_MAP[sort] || SORT_MAP.recent;
-
     const skip = (page - 1) * limit;
 
     const [articles, total] = await Promise.all([
       Article.find(filter)
         .sort(sortQuery)
         .skip(skip)
-        .limit(limit),
-
+        .limit(limit)
+        .lean(),
       Article.countDocuments(filter),
     ]);
 
@@ -70,10 +115,10 @@ if (author) {
       data: articles,
       total,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / limit) || 1,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en GET /api/articles:", error);
 
     return NextResponse.json(
       {
@@ -112,17 +157,37 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    // Manejo seguro de autores (asegura que sea un Array)
+    const formattedAuthors = Array.isArray(author)
+      ? author
+      : typeof author === "string" && author.trim()
+      ? author.split(",").map((a) => a.trim()).filter(Boolean)
+      : [];
 
     const article = new Article({
       title,
-      author,
+      author: formattedAuthors,
       description,
       content,
       category,
       imageUrl: imageUrl || "",
       dateOfPublication: dateOfPublication || new Date(),
-      typeOfComponent: typeOfComponent ,  
-    
+      typeOfComponent: typeOfComponent || "other",
+
+      // Datos para citación APA
+      journalName: body.journalName || "",
+      volume: body.volume || "",
+      issue: body.issue || "",
+      pages: body.pages || "",
+      publisher: body.publisher || "",
+      edition: body.edition || "",
+      degree: body.degree || "",
+      institution: body.institution || "",
+      reportNumber: body.reportNumber || "",
+      conferenceName: body.conferenceName || "",
+      location: body.location || "",
+      materialType: body.materialType || "",
+      doiOrUrl: body.doiOrUrl || "",
     });
 
     const saved = await article.save();

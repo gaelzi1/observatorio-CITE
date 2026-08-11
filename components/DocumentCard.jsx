@@ -1,11 +1,13 @@
 const ACTION_LABELS = {
-  article: "Ver artículo",
+  article: "Leer artículo",
   book: "Ver libro",
   thesis: "Ver tesis",
   report: "Ver informe",
-  other: "Ver recurso", // Valor por defecto si es "otro"
-};
-
+  journal_article: "Leer revista científica",
+  educational_resource: "Ver recurso educativo",
+  conference_paper: "Ver ponencia",
+  other: "Ver recurso",
+};  
 export default function DocumentCard({
   id,
   title,

@@ -173,79 +173,51 @@ export default function ArticleCarousel() {
   function renderCard(article, key) {
     if (!article) return null;
 
+    // Adaptamos el texto superior para que se vea como: "ARTÍCULO | INNOVACIÓN"
+    const tipo = article.typeOfComponent === "book" ? "LIBRO"
+               : article.typeOfComponent === "thesis" ? "TESIS"
+               : article.typeOfComponent === "report" ? "INFORME"
+               : article.typeOfComponent === "article" ? "ARTÍCULO" : "RECURSO";
+    
+    const categoria = article.category ? article.category.toUpperCase() : "GENERAL";
+
     return (
-     
-      <article
-   
+      <a
+        href={`/articles/${article._id}`}
         key={key}
-        className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors duration-300 hover:border-cite-teal-dark/40"
+        className="group relative flex h-[320px] w-full flex-col overflow-hidden border border-gray-200 transition-shadow duration-300 hover:shadow-lg sm:h-[360px]"
       >
-        {/* Imagen */}
-        <div className="h-52 overflow-hidden">
-          {article.imageUrl ? (
-            <img
-              src={article.imageUrl}
-              alt={article.title}
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-cite-teal-dark text-4xl font-bold text-white">
-              {article.category?.charAt(0).toUpperCase() || "A"}
-            </div>
-          )}
-        </div>
-
-        {/* Contenido */}
-        <div className="flex flex-1 flex-col p-6">
-          {/* Categoría */}
-          <div className="mb-4 flex items-center gap-2">
-            <span className="h-px w-5 bg-cite-teal-dark" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cite-teal-dark">
-              {article.category}
-            </span>
+        {/* 1. IMAGEN DE FONDO (Ocupa todo el contenedor) */}
+        {article.imageUrl ? (
+          <img
+            src={article.imageUrl}
+            alt={article.title}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-cite-teal-dark text-6xl font-bold text-white">
+            {categoria.charAt(0)}
           </div>
+        )}
 
-          {/* Título */}
-          <h3 className="line-clamp-2 text-xl font-bold leading-tight text-cite-teal-dark">
+        {/* 2. GRADIENTE BLANCO (Difuminado desde abajo hacia arriba) */}
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-white via-white/90 to-transparent transition-opacity duration-300 group-hover:via-white" />
+
+        {/* 3. CONTENIDO (Texto superpuesto sobre el gradiente) */}
+        <div className="relative z-10 mt-auto flex flex-col p-5 sm:p-6">
+          
+          {/* Etiqueta superior (Ej: OBSERVATORIO | TENDENCIAS) */}
+          <p className="mb-2 text-[11px] font-semibold tracking-wider text-gray-800">
+            {tipo} <span className="mx-1 text-gray-400">|</span> {categoria}
+          </p>
+
+          {/* Título principal */}
+          <h3 className="line-clamp-3 text-lg font-medium leading-snug text-black sm:text-xl">
             {article.title}
           </h3>
 
-          {/* Descripción */}
-          <p className="mt-4 line-clamp-4 text-sm leading-7 text-gray-600">
-            {article.description}
-          </p>
-
-          {/* Autor y fecha */}
-          <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-xs text-gray-500">
-            <span>{article.author || "Autor desconocido"}</span>
-            {article.createdAt && (
-              <span>{new Date(article.createdAt).toLocaleDateString("es-MX")}</span>
-            )}
-          </div>
-
-          {/* CTA */}
-          <a
-            href={`/articles/${article._id}`}
-            className="mt-6 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-cite-teal-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark"
-          >
-            Leer artículo
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="none"
-              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transform-none"
-            >
-              <path
-                d="M4 10h12M11 5l5 5-5 5"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </a>
         </div>
-      </article>
+      </a>
     );
   }
 

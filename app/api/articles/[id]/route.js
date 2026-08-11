@@ -31,79 +31,68 @@ export async function GET(request, { params }) {
     );
   }
 }
-
 export async function PUT(request, { params }) {
   try {
     await dbConnect();
+    const resolvedParams = await Promise.resolve(params);
+    const id = resolvedParams.id;
 
-    const { id } = await params;
+    if (!id) {
+      return NextResponse.json({ message: "ID no proporcionado" }, { status: 400 });
+    }
+
     const body = await request.json();
 
-    const article = await Article.findByIdAndUpdate(
+    const formattedAuthors = Array.isArray(body.author)
+      ? body.author
+      : typeof body.author === "string" && body.author.trim()
+      ? body.author.includes(";")
+        ? body.author.split(";").map((a) => a.trim()).filter(Boolean)
+        : [body.author.trim()]
+      : [];
+
+    const updatedArticle = await Article.findByIdAndUpdate(
       id,
       {
         title: body.title,
-        author: body.author,
+        author: formattedAuthors,
         description: body.description,
         content: body.content,
         category: body.category,
-        imageUrl: body.imageUrl,
+        imageUrl: body.imageUrl || "",
         dateOfPublication: body.dateOfPublication,
         published: body.published,
-        typeOfComponent: body.typeOfComponent,
+        typeOfComponent: body.typeOfComponent || "other",
+        journalName: body.journalName || "",
+        volume: body.volume || "",
+        issue: body.issue || "",
+        pages: body.pages || "",
+        publisher: body.publisher || "",
+        edition: body.edition || "",
+        degree: body.degree || "",
+        institution: body.institution || "",
+        reportNumber: body.reportNumber || "",
+        conferenceName: body.conferenceName || "",
+        location: body.location || "",
+        materialType: body.materialType || "",
+        doiOrUrl: body.doiOrUrl || "",
       },
       {
-        new: "true",  
+        new: true,
         runValidators: true,
       }
     );
 
-    if (!article) {
-      return NextResponse.json(
-        { message: "Artículo no encontrado" },
-        { status: 404 }
-      );
+    if (!updatedArticle) {
+      return NextResponse.json({ message: "Artículo no encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(article);
-
+    return NextResponse.json(updatedArticle, { status: 200 });
   } catch (error) {
+    console.error("Error en PUT /api/articles/[id]:", error);
     return NextResponse.json(
-      {
-        message: "Error al actualizar el artículo",
-        error: error.message,
-      },
-      { status: 400 }
-    );
-  }
-}
-export async function DELETE(request, { params }) {
-  try {
-    await dbConnect();
-
-    const { id } = await params;
-
-    const article = await Article.findByIdAndDelete(id);
-
-    if (!article) {
-      return NextResponse.json(
-        { message: "Artículo no encontrado" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: "Artículo eliminado correctamente",
-    });
-
-  } catch (error) {
-    return NextResponse.json(
-      {
-        message: "Error al eliminar el artículo",
-        error: error.message,
-      },
+      { message: "Error al actualizar el artículo", error: error.message },
       { status: 500 }
     );
   }
- 
 }

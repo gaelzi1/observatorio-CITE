@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 export default function LibraryFilters({
   author,
   authors,
@@ -12,6 +14,17 @@ export default function LibraryFilters({
   hasActiveFilters,
   clearFilters,
 }) {
+  const [authorInput, setAuthorInput] = useState(author || "");
+
+  useEffect(() => {
+    setAuthorInput(author || "");
+  }, [author]);
+
+  const handleAuthorSearch = () => {
+    handleAuthorChange(authorInput.trim());
+  };
+  const [localAuthor, setLocalAuthor] = useState(author || "");
+
   const SORT_OPTIONS = [
     { value: "recent", label: "Más recientes" },
     { value: "oldest", label: "Más antiguos" },
@@ -22,25 +35,46 @@ export default function LibraryFilters({
   return (
     <div className="flex flex-wrap items-center gap-3 border-t border-black/5 pt-4">
       {/* AUTOR */}
-      <div className="flex items-center gap-2">
-        <label htmlFor="author-filter" className="text-xs font-medium text-neutral-500">
-          Autor
-        </label>
-        <input
-          id="author-filter"
-          type="text"
-          list="authors-datalist"
-          value={author}
-          onChange={(e) => handleAuthorChange(e.target.value)}
-          placeholder="Buscar autor..."
-          className="w-48 shrink-0 rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
-        />
-        <datalist id="authors-datalist">
-          {authors.map((a) => (
-            <option key={a} value={a} />
-          ))}
-        </datalist>
-      </div>
+   <div className="flex items-center gap-2">
+  {/* INPUT TEMPORAL */}
+  <input
+    type="text"
+    value={localAuthor}
+    onChange={(e) => setLocalAuthor(e.target.value)} // Solo guarda el texto
+    onKeyDown={(e) => {
+      // Opcional: También buscar si presionan la tecla Enter
+      if (e.key === "Enter") {
+        handleAuthorChange(localAuthor.trim());
+      }
+    }}
+    placeholder="Buscar autor..."
+    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-cite-teal-dark"
+  />
+
+  {/* TU BOTÓN DE BÚSQUEDA */}
+  <button
+    type="button"
+    // AQUÍ SE DISPARA LA BÚSQUEDA REAL
+    onClick={() => handleAuthorChange(localAuthor.trim())} 
+    aria-label="Buscar autor"
+    className="inline-flex shrink-0 items-center gap-1 rounded border border-cite-teal-dark bg-cite-teal-dark px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cite-teal-dark/90"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="6" />
+      <path d="m16 16 4 4" />
+    </svg>
+  </button>
+</div>
 
       {/* CATEGORÍA */}
       <div className="flex items-center gap-2">
