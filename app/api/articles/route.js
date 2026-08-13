@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
+import { createSlug } from "@/utils/slugify";
 
 export async function GET(request) {
   try {
@@ -129,7 +130,6 @@ export async function GET(request) {
     );
   }
 }
-
 export async function POST(request) {
   try {
     await dbConnect();
@@ -145,19 +145,21 @@ export async function POST(request) {
       imageUrl,
       dateOfPublication,
       typeOfComponent
-     
     } = body;
 
     if (!title || !description || !content || !category || !author || author.length === 0 || dateOfPublication === undefined || typeOfComponent === undefined) {
       return NextResponse.json(
         {
           message:
-            "Título, autor, tipo de contenido, descripción,fecha, contenido y categoría son obligatorios",
+            "Título, autor, tipo de contenido, descripción, fecha, contenido y categoría son obligatorios",
         },
         { status: 400 }
       );
     }
-    // Manejo seguro de autores (asegura que sea un Array)
+    
+    // CORRECCIÓN 1: Le damos un nombre distinto a la variable para que no choque con la función importada
+    const generatedSlug = createSlug(body.title);
+
     const formattedAuthors = Array.isArray(author)
       ? author
       : typeof author === "string" && author.trim()
@@ -167,13 +169,15 @@ export async function POST(request) {
     const article = new Article({
       title,
       author: formattedAuthors,
+      // CORRECCIÓN 2: Usamos la variable que acabamos de crear en el paso anterior
+      slug: generatedSlug, 
       description,
       content,
       category,
       imageUrl: imageUrl || "",
       dateOfPublication: dateOfPublication || new Date(),
       typeOfComponent: typeOfComponent || "other",
-
+      
       // Datos para citación APA
       journalName: body.journalName || "",
       volume: body.volume || "",
@@ -188,6 +192,7 @@ export async function POST(request) {
       location: body.location || "",
       materialType: body.materialType || "",
       doiOrUrl: body.doiOrUrl || "",
+      published: true, // Por defecto, se marca como publicado al crear
     });
 
     const saved = await article.save();

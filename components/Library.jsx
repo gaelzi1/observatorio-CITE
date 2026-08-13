@@ -120,17 +120,17 @@ export default function Library() {
       {/* =========================================
           CABECERA SUPERIOR (TÍTULO Y BUSCADOR)
           ========================================= */}
-      <div className="mb-8 flex flex-col items-start justify-between gap-4 border-b border-black/5 pb-6 sm:flex-row sm:items-center">
+     <div className="mb-8 flex flex-col items-start justify-between gap-4 border-b border-black/5 pb-6 sm:flex-row sm:items-center">
         <h2 className="text-2xl font-bold uppercase tracking-wide text-cite-teal-dark">
           Biblioteca
         </h2>
-       
+        
         <div className="flex w-full max-w-sm items-stretch overflow-hidden rounded border border-black/10 sm:w-auto">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleKeyDown} 
             placeholder="Escribe tu búsqueda"
             className="w-full px-3 py-2 text-sm outline-none"
           />
@@ -214,6 +214,7 @@ export default function Library() {
                 {documentos.map((article) => (
                   <DocumentCard
                     key={article._id}
+                    slug={article.slug}
                     id={article._id}
                     title={article.title}
                     author={article.author || article.autor}

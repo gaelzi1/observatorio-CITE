@@ -61,8 +61,8 @@ export default function AdminPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     const url = editingId ? `/api/articles/${editingId}` : "/api/articles";
-    const method = editingId ? "PUT" : "POST";
-
+const method = editingId ? "PUT" : "POST";
+console.log("Enviando a:", url, "| Método:", method, "| ID:", editingId);
     try {
       const res = await fetch(url, {
         method,

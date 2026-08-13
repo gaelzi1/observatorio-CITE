@@ -6,17 +6,24 @@ import ArticleDetailSkeleton from "./ArticleDetailSkeleton";
 import { generateAPA } from "@/lib/citations";
 import ArticleAPA from "./ArticleAPA";
 import ArticleHeader from "./ArticleHeader";
+import { use } from "react";
+import { useParams } from "next/navigation";
 
-export default function ArticleDetail({ id }) {
+export default function ArticleDetail() {
+  const params = useParams(); // 👈 3. Capturamos los parámetros de la URL
+  const slug = params?.slug;
+
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    if (!slug) return;
     async function loadArticle() {
       try {
-        const res = await fetch(`/api/articles/${id}`);
+        console.log("Pidiendo a la API el slug:", slug);
+        const res = await fetch(`/api/articles/${slug}`);
         if (!res.ok) throw new Error("Artículo no encontrado");
 
         const data = await res.json();
@@ -28,8 +35,8 @@ export default function ArticleDetail({ id }) {
         setLoading(false);
       }
     }
-    if (id) loadArticle();
-  }, [id]);
+    if (slug) loadArticle();
+  }, [slug]);
 
   if (loading) return <div className="space-y-6"><ArticleDetailSkeleton /></div>;
 

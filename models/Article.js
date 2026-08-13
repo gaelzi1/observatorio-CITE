@@ -48,6 +48,12 @@ const ArticleSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+      slug: {
+      type: String,
+      required: true,
+    
+    },
+
 
     // ==========================================
     // CAMPOS PARA CITACIÓN (APA 7)
@@ -110,7 +116,7 @@ const ArticleSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
+  
     // Enlace o identificador persistente (DOI / URL fuente)
     doiOrUrl: {
       type: String,
