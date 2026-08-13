@@ -12,6 +12,7 @@ export default function DocumentCard({
   id,
   title,
   description,
+  slug,
   category,
   imageUrl,
   author,
@@ -65,7 +66,7 @@ export default function DocumentCard({
           {description}
         </p>
        <a 
-          href={`/articles/${id}`} 
+          href={`/articles/${slug}`} 
           className="mt-4 inline-block text-cite-teal-dark hover:text-cite-teal-light"
         >
           {buttonText}

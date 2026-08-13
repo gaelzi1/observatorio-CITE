@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
-
+import { Types } from "mongoose";
+import { createSlug } from "@/utils/slugify";
 export async function GET(request, { params }) {
   try {
     await dbConnect();
 
-    const { id } = await params;
+    // 1. Obtenemos los parámetros (funciona se llame [id] o [slug] tu carpeta)
+    const resolvedParams = await Promise.resolve(params);
+    const slug = resolvedParams.slug;
 
-    const article = await Article.findById(id);
+    console.log("Backend buscando en BD el slug:", slug);
+    const identifier = resolvedParams.slug || resolvedParams.id
+    console.log("1. Frontend intentando buscar este slug:", slug);
+    const article = await Article.findOne({ slug: identifier });
 
-   
     if (!article) {
       return NextResponse.json(
         { message: "Artículo no encontrado" },
@@ -34,14 +39,29 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await dbConnect();
+    
     const resolvedParams = await Promise.resolve(params);
-    const id = resolvedParams.id;
+     console.log("Resolved Params:", resolvedParams); // Depuración
+    const id = resolvedParams.slug || resolvedParams.id; // Intentamos obtener el slug o el id
+
+   
 
     if (!id) {
       return NextResponse.json({ message: "ID no proporcionado" }, { status: 400 });
     }
 
     const body = await request.json();
+
+    // 1. Buscamos el artículo original en la base de datos
+    const existingArticle = await Article.findById(id);
+    if (!existingArticle) {
+      return NextResponse.json({ message: "Artículo no encontrado" }, { status: 404 });
+    }
+
+    // 2. Lógica segura para el Slug: 
+    // Si ya tiene slug, lo respetamos para no romper los enlaces. 
+    // Si no tiene (porque es un artículo viejo), se lo creamos.
+    const finalSlug = existingArticle.slug || createSlug(body.title);
 
     const formattedAuthors = Array.isArray(body.author)
       ? body.author
@@ -56,6 +76,7 @@ export async function PUT(request, { params }) {
       {
         title: body.title,
         author: formattedAuthors,
+        slug: finalSlug, // <-- Usamos el slug seguro
         description: body.description,
         content: body.content,
         category: body.category,
@@ -82,10 +103,6 @@ export async function PUT(request, { params }) {
         runValidators: true,
       }
     );
-
-    if (!updatedArticle) {
-      return NextResponse.json({ message: "Artículo no encontrado" }, { status: 404 });
-    }
 
     return NextResponse.json(updatedArticle, { status: 200 });
   } catch (error) {
