@@ -1,37 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useCardsPerView } from "@/hooks/useCardsPerView";
+import CarouselCard from "./CarouselCard";
 
 function cx(...args) {
   return args.filter(Boolean).join(" ");
-}
-
-// Devuelve cuántas tarjetas se ven a la vez según el viewport:
-// 1 en celular, 2 en tablet, 3 en escritorio.
-function useCardsPerView() {
-  const getValue = () => {
-    if (typeof window === "undefined") return 3;
-    if (window.matchMedia("(min-width: 1024px)").matches) return 3;
-    if (window.matchMedia("(min-width: 640px)").matches) return 2;
-    return 1;
-  };
-
-  const [cardsPerView, setCardsPerView] = useState(getValue);
-
-  useEffect(() => {
-    const mqLg = window.matchMedia("(min-width: 1024px)");
-    const mqSm = window.matchMedia("(min-width: 640px)");
-    const update = () => setCardsPerView(getValue());
-    update();
-    mqLg.addEventListener("change", update);
-    mqSm.addEventListener("change", update);
-    return () => {
-      mqLg.removeEventListener("change", update);
-      mqSm.removeEventListener("change", update);
-    };
-  }, []);
-
-  return cardsPerView;
 }
 
 export default function ArticleCarousel() {
@@ -40,14 +14,12 @@ export default function ArticleCarousel() {
   const [isPaused, setIsPaused] = useState(false);
 
   const cardsPerView = useCardsPerView();
-
-  // Índice dentro de la pista extendida (incluye clones al inicio/final).
   const [trackIndex, setTrackIndex] = useState(cardsPerView);
   const [withTransition, setWithTransition] = useState(true);
   const trackIndexRef = useRef(trackIndex);
   trackIndexRef.current = trackIndex;
 
-  // Cargar artículos
+  // Carga de artículos
   useEffect(() => {
     async function loadArticles() {
       try {
@@ -55,14 +27,17 @@ export default function ArticleCarousel() {
         if (!res.ok) throw new Error("Error al cargar artículos");
 
         const data = await res.json();
-        const publishedArticles = (data.data || [])
-          .filter((article) => article.published)
+        const rawArticles = data.data || [];
+
+        // Si tienes pocos publicados para probar, puedes quitar el filter temporalmente
+        const publishedArticles = rawArticles
+          .filter((article) => article.published !== false)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, 6);
+          .slice(0, 8);
 
         setArticles(publishedArticles);
       } catch (error) {
-        console.error(error);
+        console.error("Error al cargar artículos:", error);
       } finally {
         setLoading(false);
       }
@@ -71,9 +46,10 @@ export default function ArticleCarousel() {
     loadArticles();
   }, []);
 
-  const isCarousel = articles.length > 3;
+  // Activar carrusel si hay más elementos que los visibles en pantalla
+  const isCarousel = articles.length > cardsPerView;
 
-  // Pista con clones al inicio y al final para poder "loopear" sin corte visible.
+  // Pista extendida para loop continuo
   const track = useMemo(() => {
     if (!isCarousel) return articles;
     const head = articles.slice(-cardsPerView);
@@ -84,15 +60,12 @@ export default function ArticleCarousel() {
   const firstRealIndex = cardsPerView;
   const lastRealIndex = cardsPerView + articles.length - 1;
 
-  // Reubicar el punto de partida cada vez que cambia el layout (datos o breakpoint),
-  // sin animar el salto.
   useEffect(() => {
     if (!isCarousel) return;
     setWithTransition(false);
     setTrackIndex(firstRealIndex);
-  }, [isCarousel, cardsPerView, articles.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isCarousel, cardsPerView, articles.length]);
 
-  // Reactivar la transición un frame después de cualquier reposicionamiento instantáneo.
   useEffect(() => {
     if (withTransition) return;
     const id = requestAnimationFrame(() => setWithTransition(true));
@@ -118,7 +91,6 @@ export default function ArticleCarousel() {
     return () => clearInterval(interval);
   }, [isCarousel, isPaused, nextArticle]);
 
-  // Al cruzar la zona de clones, saltar de forma invisible al índice real equivalente.
   function handleTransitionEnd() {
     if (!isCarousel) return;
     const i = trackIndexRef.current;
@@ -137,7 +109,7 @@ export default function ArticleCarousel() {
     setTrackIndex(firstRealIndex + targetRealIndex);
   };
 
-  // Swipe táctil para navegar en móvil
+  // Swipe táctil
   const touchStartX = useRef(null);
   const touchDeltaX = useRef(0);
 
@@ -170,109 +142,35 @@ export default function ArticleCarousel() {
     ? (((trackIndex - firstRealIndex) % articles.length) + articles.length) % articles.length
     : 0;
 
-  function renderCard(article, key) {
-    if (!article) return null;
-
-    return (
-     
-      <article
-   
-        key={key}
-        className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors duration-300 hover:border-cite-teal-dark/40"
-      >
-        {/* Imagen */}
-        <div className="h-52 overflow-hidden">
-          {article.imageUrl ? (
-            <img
-              src={article.imageUrl}
-              alt={article.title}
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-cite-teal-dark text-4xl font-bold text-white">
-              {article.category?.charAt(0).toUpperCase() || "A"}
-            </div>
-          )}
-        </div>
-
-        {/* Contenido */}
-        <div className="flex flex-1 flex-col p-6">
-          {/* Categoría */}
-          <div className="mb-4 flex items-center gap-2">
-            <span className="h-px w-5 bg-cite-teal-dark" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cite-teal-dark">
-              {article.category}
-            </span>
-          </div>
-
-          {/* Título */}
-          <h3 className="line-clamp-2 text-xl font-bold leading-tight text-cite-teal-dark">
-            {article.title}
-          </h3>
-
-          {/* Descripción */}
-          <p className="mt-4 line-clamp-4 text-sm leading-7 text-gray-600">
-            {article.description}
-          </p>
-
-          {/* Autor y fecha */}
-          <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-xs text-gray-500">
-            <span>{article.author || "Autor desconocido"}</span>
-            {article.createdAt && (
-              <span>{new Date(article.createdAt).toLocaleDateString("es-MX")}</span>
-            )}
-          </div>
-
-          {/* CTA */}
-          <a
-            href={`/articles/${article._id}`}
-            className="mt-6 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-cite-teal-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark"
-          >
-            Leer artículo
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="none"
-              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transform-none"
-            >
-              <path
-                d="M4 10h12M11 5l5 5-5 5"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </a>
-        </div>
-      </article>
-    );
-  }
-
-  // Loading
   if (loading) {
     return (
-      <p className="animate-pulse py-10 text-center text-neutral-500">
-        Cargando artículos...
-      </p>
+      <div className="py-16 text-center text-neutral-500">
+        <p className="animate-pulse">Cargando recursos...</p>
+      </div>
     );
   }
 
-  // Sin artículos
   if (articles.length === 0) {
     return (
-      <p className="py-10 text-center text-neutral-500">
-        No hay artículos publicados.
-      </p>
+      <div className="py-16 text-center text-neutral-500">
+        <p>No hay recursos publicados en este momento.</p>
+      </div>
     );
   }
 
-  // Si hay 3 o menos: grid estático, sin carrusel
+  // Si hay pocos recursos, se muestra en Grid centrado
   if (!isCarousel) {
     return (
-      <section className="w-full py-16">
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 sm:grid-cols-2 sm:gap-8 sm:px-6 lg:grid-cols-3">
-          {articles.map((article) => renderCard(article, article._id))}
+      <section className="w-full bg-gray-100 py-16">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-8 px-4">
+          <h2 className="text-xl font-bold text-cite-teal-dark sm:text-2xl lg:text-3xl">
+            Artículos Recientes
+          </h2>
+          <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {articles.map((article) => (
+              <CarouselCard key={article._id} article={article} />
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -292,7 +190,7 @@ export default function ArticleCarousel() {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          {/* Pista deslizante: cada tarjeta avanza su propio ancho, sin saltos de bloque */}
+          {/* Pista deslizante */}
           <div
             className="overflow-hidden touch-pan-y"
             onTouchStart={handleTouchStart}
@@ -313,63 +211,41 @@ export default function ArticleCarousel() {
                   className="flex-shrink-0 px-1 sm:px-2 md:px-3"
                   style={{ width: slideWidth }}
                 >
-                  {renderCard(article, article._id)}
+                  <CarouselCard article={article} />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Flecha anterior */}
+          {/* Flecha Anterior */}
           <button
             type="button"
             onClick={previousArticle}
             aria-label="Artículo anterior"
-            className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark sm:flex sm:p-2.5 md:-translate-x-4"
+            className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white sm:flex sm:p-2.5 md:-translate-x-4"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="none"
-              className="h-4 w-4"
-            >
-              <path
-                d="M12 5l-5 5 5 5"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+              <path d="M12 5l-5 5 5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          {/* Flecha siguiente */}
+          {/* Flecha Siguiente */}
           <button
             type="button"
             onClick={nextArticle}
             aria-label="Siguiente artículo"
-            className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cite-teal-dark sm:flex sm:p-2.5 md:translate-x-4"
+            className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white sm:flex sm:p-2.5 md:translate-x-4"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="none"
-              className="h-4 w-4"
-            >
-              <path
-                d="M8 5l5 5-5 5"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+              <path d="M8 5l5 5-5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          {/* Indicadores */}
+          {/* Indicadores / Dots */}
           <div className="mt-6 flex justify-center gap-2 sm:mt-8">
             {articles.map((article, i) => (
               <button
-                key={article._id}
+                key={article.slug}
                 type="button"
                 aria-label={`Ir al artículo ${i + 1}`}
                 onClick={() => goToArticle(i)}

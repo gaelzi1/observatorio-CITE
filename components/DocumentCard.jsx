@@ -1,11 +1,24 @@
+const ACTION_LABELS = {
+  article: "Leer artículo",
+  book: "Ver libro",
+  thesis: "Ver tesis",
+  report: "Ver informe",
+  journal_article: "Leer revista científica",
+  educational_resource: "Ver recurso educativo",
+  conference_paper: "Ver ponencia",
+  other: "Ver recurso",
+};  
 export default function DocumentCard({
   id,
   title,
   description,
+  slug,
   category,
   imageUrl,
   author,
+  typeOfComponent,
 }) {
+  const buttonText = ACTION_LABELS[typeOfComponent] || "Ver recurso";
   return (
     <article className="flex gap-4 border-b border-black/5 py-6">
       <div className="h-24 w-32 shrink-0 overflow-hidden rounded">
@@ -52,8 +65,11 @@ export default function DocumentCard({
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
           {description}
         </p>
-        <a href={`/articles/${id}`} className="mt-4 inline-block text-cite-teal-dark hover:text-cite-teal-light">
-          Ver artículo
+       <a 
+          href={`/articles/${slug}`} 
+          className="mt-4 inline-block text-cite-teal-dark hover:text-cite-teal-light"
+        >
+          {buttonText}
         </a>
       </div>
     </article>

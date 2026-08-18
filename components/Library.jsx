@@ -2,15 +2,11 @@
 
 import { useEffect, useState } from "react";
 import DocumentCard from "./DocumentCard";
+import LibraryFilters from "./LibraryFilters";
+import LibraryPagination from "./LibraryPagination";
+
 
 const LIMIT = 6;
-
-const SORT_OPTIONS = [
-  { value: "recent", label: "Más recientes" },
-  { value: "oldest", label: "Más antiguos" },
-  { value: "title_asc", label: "Título A-Z" },
-  { value: "title_desc", label: "Título Z-A" },
-];
 
 export default function Library() {
   const [query, setQuery] = useState("");
@@ -18,10 +14,11 @@ export default function Library() {
 
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("recent");
+
   const [categories, setCategories] = useState([]);
   const [author, setAuthor] = useState("");
   const [authors, setAuthors] = useState([]);
-  const[year,setYear] = useState("");
+  const [year, setYear] = useState("");
 
   const [documentos, setDocumentos] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,27 +27,24 @@ export default function Library() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  
-   // Fetch distinct authors for the datalist
+  const [typeFilter, setTypeFilter] = useState("");
+
+  // Cargar Categorías (y Autores si tienes el endpoint)
   useEffect(() => {
     async function loadFilters() {
       try {
         const res = await fetch(`/api/categories`);
         if (!res.ok) throw new Error("Error cargando categorías");
-
         const data = await res.json();
-        
-        // Guardamos directamente la data limpia que viene del backend
         setCategories(data.data || []);
-        
       } catch (err) {
         console.error("No se pudieron cargar los filtros", err);
       }
     }
-
     loadFilters();
   }, []);
 
+  // Cargar Artículos
   useEffect(() => {
     const controller = new AbortController();
 
@@ -59,44 +53,29 @@ export default function Library() {
       setError(null);
 
       try {
-        const params = new URLSearchParams({
-          page: currentPage,
-          limit: LIMIT,
-          sort,
-        });
+        const params = new URLSearchParams({ page: currentPage, limit: LIMIT, sort });
 
-        if (search) {
-          params.set("q", search);
-        }
-          category
-        if (category) {
-          params.set("category", category);
-        }
-
-        if (author) {
-          params.set("author", author);
-        }
-        if (year) {
-          params.set("year", year);
+        if (search) params.set("q", search);
+        if (category) params.set("category", category); // <-- Error de sintaxis corregido aquí
+        if (author) params.set("author", author);
+        if (year) params.set("year", year);
+        if (typeFilter) {
+          params.set("typeOfComponent", typeFilter);
         }
 
         const res = await fetch(`/api/articles?${params.toString()}`, {
           signal: controller.signal,
         });
+       
 
-        if (!res.ok) {
-          throw new Error("Error de red");
-        }
+        if (!res.ok) throw new Error("Error de red");
 
         const data = await res.json();
-
         setDocumentos(data.data || []);
         setTotalPages(data.totalPages || 1);
       } catch (err) {
         if (err.name !== "AbortError") {
-          setError(
-            "No se pudo cargar la biblioteca. Verifica la conexión a MongoDB."
-          );
+          setError("No se pudo cargar la biblioteca. Verifica la conexión a MongoDB.");
         }
       } finally {
         setLoading(false);
@@ -104,245 +83,163 @@ export default function Library() {
     }
 
     loadArticles();
-
     return () => controller.abort();
-  }, [search, category, author, sort,year, currentPage]);
+  }, [search, category, author, sort, year,typeFilter, currentPage]);
 
-  function handleSearch() {
-    setCurrentPage(1);
-    setSearch(query.trim());
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  }
-
-  function handleCategoryChange(value) {
-    setCategory(value);
-    setCurrentPage(1);
-  }
-
-  function handleauthorChange(value) {
-    setAuthor(value);
-    setCurrentPage(1);
-  }
-
-  function handleSortChange(value) {
-    setSort(value);
-    setCurrentPage(1);
-  }
-  function handleYearChange(value) {
-    setYear(value);
-    setCurrentPage(1);
-  }
-
-  function clearFilters() {
-    setQuery("");
-    setSearch("");
-    setCategory("");
-    setAuthor("");
-    setYear("");
-    setSort("recent");
-    setCurrentPage(1);
-  }
+  // Manejadores
+  const handleSearch = () => { setCurrentPage(1); setSearch(query.trim()); };
+  const handleKeyDown = (e) => { if (e.key === "Enter") handleSearch(); };
+  const handleCategoryChange = (val) => { setCategory(val); setCurrentPage(1); };
+  const handleAuthorChange = (val) => { setAuthor(val); setCurrentPage(1); };
+  const handleSortChange = (val) => { setSort(val); setCurrentPage(1); };
+  const handleYearChange = (val) => { setYear(val); setCurrentPage(1); };
+  
+  const clearFilters = () => {
+    setQuery(""); setSearch(""); setCategory(""); setAuthor(""); setYear(""); setSort("recent"); setTypeFilter(""); setCurrentPage(1);
+  };
 
   const hasActiveFilters = search || category || author || year || sort !== "recent";
 
+  const CONTENT_TYPES = [
+    { id: "", label: "Todos los recursos" },
+    { id: "article", label: "Artículos" },
+    { id: "book", label: "Libros" },
+    { id: "thesis", label: "Tesis" },
+    { id: "report", label: "Informes" },
+    { id: "journal_article", label: "Revistas Científicas" },
+    { id: "educational_resource", label: "Recursos Educativos" },
+    { id: "conference_paper", label: "Ponencias" },
+    { id: "other", label: "Otros" },
+
+  ];
+
+
   return (
-    <section className="mx-auto max-w-6xl px-6 py-10">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <h2 className="text-lg font-semibold uppercase tracking-wide text-cite-teal-dark">
-            Biblioteca
-          </h2>
 
-          <div className="flex w-full max-w-sm items-stretch overflow-hidden rounded border border-black/10 sm:w-auto">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe tu búsqueda"
-              className="w-full px-3 py-2 text-sm outline-none"
-            />
-
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="whitespace-nowrap bg-cite-teal-dark px-4 py-2 text-sm text-white transition-colors hover:bg-cite-teal"
-            >
-              Búsqueda
-            </button>
-          </div>
-        </div>
-
-        {/* BARRA DE FILTROS */}
-        <div className="flex flex-wrap items-center gap-3 border-t border-black/5 pt-4">
-          <div className="flex items-center gap-2">
-            <label htmlFor="author-filter" className="text-xs font-medium text-neutral-500">
-              autor
-            </label>
-            <input
-              id="author-filter"
-              type="text"
-              list="authors-datalist"
-              value={author}
-              onChange={(e) => handleauthorChange(e.target.value)}
-              placeholder="Buscar autor..."
-              className="w-48 shrink-0 rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
-            />
-            
-            <datalist id="authors-datalist" >
-              {authors.map((a) => (
-                <option key={a} value={a} />
-              ))}
-            </datalist>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label htmlFor="category-filter" className="text-xs font-medium text-neutral-500">
-              Categoría
-            </label>
-            <select
-              id="category-filter"
-              value={category}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
-            >
-              <option value="">Todas</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label htmlFor="order-filter" className="text-xs font-medium text-neutral-500">
-              Ordenar por
-            </label>
-            <select
-              id="order-filter"
-              value={sort}
-              onChange={(e) => handleSortChange(e.target.value)}
-              className="rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label htmlFor="year-filter" className="text-xs font-medium text-neutral-500">
-              Año
-            </label>
-            <select
-              id="year-filter"
-              value={year}
-              onChange={(e) => handleYearChange(e.target.value)}
-              className="rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-neutral-700 outline-none transition-colors focus:border-cite-teal-dark"
-            >
-              <option value="">Todos</option>
-              {/* Generamos los años desde el actual hacia atrás */}
-              {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
-
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="ml-auto text-xs font-medium text-neutral-500 underline-offset-2 transition-colors hover:text-cite-coral hover:underline"
-            >
-              Limpiar filtros
-            </button>
-          )}
+    <section className="mx-auto max-w-7xl p py-10">
+      {/* =========================================
+          CABECERA SUPERIOR (TÍTULO Y BUSCADOR)
+          ========================================= */}
+     <div className="mb-8 flex flex-col items-start justify-between gap-4 border-b border-black/5 pb-6 sm:flex-row sm:items-center">
+        <h2 className="text-2xl font-bold uppercase tracking-wide text-cite-teal-dark">
+          Biblioteca
+        </h2>
+        
+        <div className="flex w-full max-w-sm items-stretch overflow-hidden rounded border border-black/10 sm:w-auto">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown} 
+            placeholder="Escribe tu búsqueda"
+            className="w-full px-3 py-2 text-sm outline-none"
+          />
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="whitespace-nowrap bg-cite-teal-dark px-4 py-2 text-sm text-white transition-colors hover:bg-cite-teal"
+          >
+            Búsqueda
+          </button>
         </div>
       </div>
+ 
 
-      <div className="mt-8 flex flex-col items-center gap-4">
-        {loading && (
-          <p className="py-8 text-sm text-neutral-500">
-            Cargando artículos...
-          </p>
-        )}
-
-        {!loading && error && (
-          <p className="py-8 text-sm text-red-600">
-            {error}
-          </p>
-        )}
-
-        {!loading && !error && documentos.length === 0 && (
-          <p className="py-8 text-sm text-neutral-500">
-            No se encontraron artículos para tu búsqueda.
-          </p>
-        )}
-
-        {!loading && !error && documentos.length > 0 && (
-          <div className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
-            {documentos.map((article) => (
-              <DocumentCard
-                key={article._id}
-                id={article._id}
-                title={article.title}
-                author={article.author}
-                description={article.description}
-                category={article.category}
-                imageUrl={article.imageUrl}
-              />
-            ))}
-          </div>
-        )}
-
-        {!loading && totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-2">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((page) => page - 1)}
-              className="rounded border px-4 py-2 disabled:opacity-50"
-            >
-              Anterior
-            </button>
-
-            {Array.from({ length: totalPages }, (_, index) => {
-              const page = index + 1;
-
-              return (
+      {/* =========================================
+          CONTENEDOR PRINCIPAL DE DOS COLUMNAS
+          ========================================= */}
+      <div className="flex flex-col gap-10 md:flex-row">
+        
+        {/* COLUMNA IZQUIERDA: BARRA LATERAL (Sidebar) */}
+      {/* Agregamos self-start y movemos el sticky al contenedor principal */}
+       <aside className="self-start w-full shrink-0 md:sticky md:top-32 md:w-56 lg:w-64">
+          <div>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900">
+              Indicadores
+            </h3>
+            
+            <nav className="flex flex-col gap-1">
+              {CONTENT_TYPES.map((type) => (
                 <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`rounded border px-3 py-2 ${
-                    currentPage === page
-                      ? "bg-cite-teal-dark text-white"
-                      : ""
+                  key={type.id}
+                  onClick={() => {
+                    setTypeFilter(type.id);
+                    setCurrentPage(1);
+                  }}
+                  className={`text-left px-4 py-3 text-sm rounded transition-colors ${
+                    typeFilter === type.id
+                      ? "bg-cite-teal-dark text-white font-medium shadow-sm"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                 >
-                  {page}
+                  {type.label}
                 </button>
-              );
-            })}
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((page) => page + 1)}
-              className="rounded border px-4 py-2 disabled:opacity-50"
-            >
-              Siguiente
-            </button>
+              ))}
+            </nav>
           </div>
-        )}
+        </aside>
+
+        {/* COLUMNA DERECHA: FILTROS Y RESULTADOS */}
+        <div className=" flex-1 min-w-0">
+          
+          {/* COMPONENTE DE FILTROS SUPERIORES */}
+          <div className="mb-8 border-b border-black/5 pb-6">
+            <LibraryFilters
+              author={author}
+              authors={authors}
+              handleAuthorChange={handleAuthorChange}
+              category={category}
+              categories={categories}
+              handleCategoryChange={handleCategoryChange}
+              sort={sort}
+              handleSortChange={handleSortChange}
+              year={year}
+              handleYearChange={handleYearChange}
+              hasActiveFilters={hasActiveFilters}
+              clearFilters={clearFilters}
+            />
+          </div>
+
+          {/* ESTADO DE LA LISTA */}
+          <div className="flex w-full flex-col items-center gap-4">
+            {loading && <p className="py-8 text-sm text-neutral-500">Cargando artículos...</p>}
+            {!loading && error && <p className="py-8 text-sm text-red-600">{error}</p>}
+            {!loading && !error && documentos.length === 0 && (
+              <p className="py-8 text-sm text-neutral-500">No se encontraron artículos para tu búsqueda.</p>
+            )}
+
+            {/* LISTA DE ARTÍCULOS */}
+            {!loading && !error && documentos.length > 0 && (
+              <div className="grid w-full grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2">
+                {documentos.map((article) => (
+                  <DocumentCard
+                    key={article._id}
+                    slug={article.slug}
+                    id={article._id}
+                    title={article.title}
+                    author={article.author || article.autor}
+                    description={article.description}
+                    category={article.category}
+                    imageUrl={article.imageUrl}
+                    typeOfComponent={article.typeOfComponent}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* COMPONENTE DE PAGINACIÓN */}
+            {!loading && (
+              <div className="mt-8 w-full">
+                <LibraryPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  setCurrentPage={setCurrentPage} 
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
     </section>
   );

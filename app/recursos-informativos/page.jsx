@@ -7,6 +7,7 @@ export default function ResourcesPage() {
   return (
     <main>
       <Header />
+      
       <Hero 
         title="Recursos Informativos"
         subtitle="Descubre nuestra colección de materiales"
