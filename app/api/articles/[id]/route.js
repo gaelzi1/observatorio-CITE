@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
@@ -109,6 +111,45 @@ export async function PUT(request, { params }) {
     console.error("Error en PUT /api/articles/[id]:", error);
     return NextResponse.json(
       { message: "Error al actualizar el artículo", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request, { params }) {
+  try {
+    // 1. Nos conectamos a la base de datos
+    await dbConnect();
+
+    // 2. Extraemos el ID (o slug) de la URL
+    // Nota: en las versiones recientes de Next.js, 'params' debe resolverse con await
+    const resolvedParams = await params;
+    const identifier = resolvedParams.id; // Cambia a .slug si tu carpeta se llama [slug]
+
+    // 3. Buscamos y eliminamos el documento en MongoDB
+    // Si estás usando IDs de Mongo (los largos alfanuméricos):
+    const deletedArticle = await Article.findByIdAndDelete(identifier);
+    
+    // (Si estuvieras eliminando por slug, usarías: await Article.findOneAndDelete({ slug: identifier }))
+
+    // 4. Si no existía, regresamos un error 404
+    if (!deletedArticle) {
+      return NextResponse.json(
+        { message: "Artículo no encontrado o ya fue eliminado." },
+        { status: 404 }
+      );
+    }
+
+    // 5. ¡Éxito! Regresamos un JSON válido para que tu frontend sea feliz
+    return NextResponse.json(
+      { message: "Artículo eliminado correctamente." },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error("Error al eliminar:", error);
+    return NextResponse.json(
+      { message: "Hubo un problema al procesar la eliminación." },
       { status: 500 }
     );
   }

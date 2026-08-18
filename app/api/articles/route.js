@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
@@ -18,7 +19,7 @@ export async function GET(request) {
     const limit = Math.max(1, Number(searchParams.get("limit")) || 6);
     const typeOfComponent = searchParams.get("typeOfComponent")?.trim();
 
-    // Filtros adicionales para metadatos
+    // Filtros adicionales para metadatos 
     const journalName = searchParams.get("journalName")?.trim();
     const volume = searchParams.get("volume")?.trim();
     const issue = searchParams.get("issue")?.trim();

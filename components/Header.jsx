@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { label: "Inicio", href: "/" },
   { label: "Quiénes somos", href: "/quienes-somos" },
   { label: "Informes y estadísticas", href: "/informes-estadisticas" },
-  { label: "Noticias actualidad", href: "/noticias" },
+  { label: "linea del tiempo", href: "/linea-tiempo" },
   { label: "Recursos informativos", href: "/recursos-informativos" },
 ];
 
