@@ -1,13 +1,15 @@
 import ArticleDetail from "@/components/ArticleDetail";
 import Header from "@/components/Header";
-export default async function ArticlePage({ params }) {
-  const { id } = await params;
+import ArticleDetailSkeleton from "@/components/ArticleDetailSkeleton"
 
+
+
+export default async function ArticlePage({ params }) {
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug || resolvedParams?.id;
   return(
   <><Header />
-  <ArticleDetail id={id} />
+  <ArticleDetail slug={slug} />
   </>
-);
-  
-  
+); 
 }
