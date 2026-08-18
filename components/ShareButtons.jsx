@@ -1,29 +1,37 @@
-import { useState } from "react";
+"use client";
+import { useEffect, useState } from "react";
 
 export default function ShareButtons({ title }) {
   const [copied, setCopied] = useState(false);
+  // 1. Iniciamos la URL vacía para evitar el error de hidratación
+  const [currentUrl, setCurrentUrl] = useState("");
 
-  const shareUrl = encodeURIComponent(
-    typeof window !== "undefined" ? window.location.href : ""
-  );
+  // 2. Llenamos la URL solo cuando ya estamos en el navegador del cliente
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
+
+  // 3. Usamos currentUrl en lugar de window para construir las rutas
+  const shareUrl = currentUrl ? encodeURIComponent(currentUrl) : "";
   const shareTitle = encodeURIComponent(title);
 
+  // 4. Si la URL aún está vacía (durante el servidor), le ponemos un "#" temporal
   const shareLinks = [
     {
       label: "Compartir en Facebook",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
+      href: currentUrl ? `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` : "#",
       bg: "bg-[#1877F2]",
       icon: "f",
     },
     {
       label: "Compartir en LinkedIn",
-      href: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`,
+      href: currentUrl ? `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` : "#",
       bg: "bg-[#0A66C2]",
       icon: "in",
     },
     {
       label: "Compartir en X",
-      href: `https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`,
+      href: currentUrl ? `https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}` : "#",
       bg: "bg-black",
       icon: "𝕏",
     },

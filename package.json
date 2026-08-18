@@ -10,6 +10,7 @@
     "seed": "node scripts/seed.js"
   },
   "dependencies": {
+    "framer-motion": "^13.1.0",
     "lucide-react": "^1.28.0",
     "mongodb": "^6.9.0",
     "mongoose": "^9.8.0",

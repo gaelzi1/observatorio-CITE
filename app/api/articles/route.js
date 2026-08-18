@@ -18,7 +18,7 @@ export async function GET(request) {
     const limit = Math.max(1, Number(searchParams.get("limit")) || 6);
     const typeOfComponent = searchParams.get("typeOfComponent")?.trim();
 
-    // Filtros adicionales para metadatos
+    // Filtros adicionales para metadatos 
     const journalName = searchParams.get("journalName")?.trim();
     const volume = searchParams.get("volume")?.trim();
     const issue = searchParams.get("issue")?.trim();
