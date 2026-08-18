@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 // IMPORTANTE: Ajusta estas rutas de importación según la estructura de tu proyecto
 import dbConnect from "@/lib/mongodb";

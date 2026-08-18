@@ -232,7 +232,7 @@ export default function Library() {
             gap-6
             sm:grid-cols-2
             sm:gap-7
-            lg:grid-cols-3
+            lg:grid-cols-2
             lg:gap-8
             xl:gap-10
           "
