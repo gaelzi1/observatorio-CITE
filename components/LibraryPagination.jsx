@@ -2,11 +2,11 @@ export default function LibraryPagination({ currentPage, totalPages, setCurrentP
   if (totalPages <= 1) return null;
 
   return (
-    <div className="mt-8 flex items-center justify-center gap-2">
+    <div className="mt-8 flex items-center justify-center gap-2 text-sm">
       <button
         disabled={currentPage === 1}
         onClick={() => setCurrentPage((page) => page - 1)}
-        className="rounded border px-4 py-2 disabled:opacity-50"
+        className="rounded border border-gray-200 bg-surface px-4 py-2 font-medium text-primary transition-colors hover:bg-base disabled:pointer-events-none disabled:opacity-50"
       >
         Anterior
       </button>
@@ -17,8 +17,10 @@ export default function LibraryPagination({ currentPage, totalPages, setCurrentP
           <button
             key={page}
             onClick={() => setCurrentPage(page)}
-            className={`rounded border px-3 py-2 ${
-              currentPage === page ? "bg-cite-teal-dark text-white" : ""
+            className={`rounded border px-3 py-2 font-medium transition-colors ${
+              currentPage === page
+                ? "border-primary bg-primary text-inverse"
+                : "border-gray-200 bg-surface text-primary hover:bg-base"
             }`}
           >
             {page}
@@ -29,7 +31,7 @@ export default function LibraryPagination({ currentPage, totalPages, setCurrentP
       <button
         disabled={currentPage === totalPages}
         onClick={() => setCurrentPage((page) => page + 1)}
-        className="rounded border px-4 py-2 disabled:opacity-50"
+        className="rounded border border-gray-200 bg-surface px-4 py-2 font-medium text-primary transition-colors hover:bg-base disabled:pointer-events-none disabled:opacity-50"
       >
         Siguiente
       </button>

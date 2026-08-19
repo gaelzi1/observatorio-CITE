@@ -13,24 +13,24 @@ export default function AdminForm({
   const isEducational = form.typeOfComponent === "educational_resource";
 
   return (
-    <section className="mt-6 rounded-lg bg-neutral-50 p-6">
+    <section className="mt-6 rounded-lg bg-surface p-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* TÍTULO */}
         <div>
-          <label className="mb-1 block text-sm text-cite-teal-dark">Título</label>
+          <label className="mb-1 block text-sm text-primary">Título</label>
           <input
             type="text"
             name="title"
             value={form.title}
             onChange={handleChange}
             required
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+            className="w-full rounded border border-default bg-base px-3 py-2 outline-none focus:border-cite-teal-dark"
           />
         </div>
 
         {/* AUTOR(ES) */}
         <div>
-          <label className="mb-1 block text-sm text-cite-teal-dark">
+          <label className="mb-1 block text-sm text-primary">
             Autor(es) <span className="text-xs text-neutral-400 font-normal">(Ej. Apellido, N. o varios separados por coma)</span>
           </label>
           <input
@@ -40,14 +40,14 @@ export default function AdminForm({
             onChange={handleChange}
             required
             placeholder="Ej. Pérez, J., López, M."
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+            className="w-full rounded border border-default bg-base px-3 py-2 outline-none focus:border-primary"
           />
         </div>
 
         {/* CATEGORÍA Y TIPO DE COMPONENTE */}
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm text-cite-teal-dark">Categoría</label>
+            <label className="mb-1 block text-sm text-primary">Categoría</label>
             <input
               type="text"
               name="category"
@@ -55,18 +55,18 @@ export default function AdminForm({
               onChange={handleChange}
               placeholder="Ej. Innovación Educativa, Competencias Digitales"
               required
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+              className="w-full rounded border border-default bg-base px-3 py-2 outline-none focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-cite-teal-dark">Tipo de recurso</label>
+            <label className="mb-1 block text-sm text-primary">Tipo de recurso</label>
             <select
               name="typeOfComponent"
               value={form.typeOfComponent}
               onChange={handleChange}
               required
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+              className="w-full rounded border border-default bg-base px-3 py-2 outline-none focus:border-primary"
             >
               <option value="" disabled>Selecciona un tipo...</option>
               <option value="article">Artículo general</option>
@@ -81,14 +81,14 @@ export default function AdminForm({
           </div>
           {/* IMAGEN DE PORTADA (OPCIONAL) */} 
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm text-cite-teal-dark">URL de imagen de portada (opcional)</label>
+            <label className="mb-1 block text-sm text-primary">URL de imagen de portada (opcional)</label>
             <input
               type="text"
               name="imageUrl"
               value={form.imageUrl}
               onChange={handleChange}
               placeholder="https://images.unsplash.com/..."
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-cite-teal-dark"
+              className="w-full rounded border border-default bg-base px-3 py-2 outline-none focus:border-primary"
             />
           </div>
         </div>
@@ -97,8 +97,8 @@ export default function AdminForm({
         {/* SECCIÓN CONDICIONAL: CAMPOS ESPECÍFICOS PARA CITACIÓN APA */}
         {/* ========================================================= */}
         {form.typeOfComponent && form.typeOfComponent !== "other" && (
-          <div className="rounded-md border border-slate-200 bg-white p-4">
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-cite-teal-dark">
+          <div className="rounded-md border border-slate-200 bg-base p-4">
+            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
               Datos para citación (APA 7)
             </h4>
 
@@ -106,18 +106,18 @@ export default function AdminForm({
             {isJournal && (
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs text-neutral-600">Nombre de la revista</label>
+                  <label className="mb-1 block text-xs text-primary">Nombre de la revista</label>
                   <input
                     type="text"
                     name="journalName"
                     value={form.journalName || ""}
                     onChange={handleChange}
                     placeholder="Ej. Revista Iberoamericana de Educación"
-                    className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-cite-teal-dark"
+                    className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-default"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-neutral-600">Volumen (Número)</label>
+                  <label className="mb-1 block text-xs text-primary">Volumen (Número)</label>
                   <input
                     type="text"
                     name="volume"

@@ -5,36 +5,31 @@ import { generateAPA } from "@/lib/citations";
 import ArticleAPA from "./ArticleAPA";
 import ArticleHeader from "./ArticleHeader";
 
-
 export default async function ArticleDetail({slug}) {
-
   if (!slug) return null;
   
- 
-
- 
-try {
-    
+  try {
     await dbConnect();
     let article = await Article.findOne({ slug }).lean();
 
-    
     if (!article) {
       return (
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-6 py-24 text-center">
           <span className="text-3xl">⚠️</span>
-          <p className="text-lg font-medium text-neutral-800">Artículo no encontrado</p>
-          <Link href="/recursos-informativos" className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-cite-teal-dark px-4 py-2 text-sm font-medium text-white">
+          <p className="text-lg font-medium text-primary">Artículo no encontrado</p>
+          <Link 
+            href="/recursos-informativos" 
+           
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-inverse transition-opacity hover:opacity-90"
+          >
             Volver al inicio
           </Link>
         </div>
       );
     }
 
-   
     article = JSON.parse(JSON.stringify(article));
 
-    
     const citation = generateAPA(article);
     const articleAuthor = article.author || article.autor;
     const dateLabel = article.createdAt
@@ -47,16 +42,19 @@ try {
 
   return (
       <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* NAVEGACIÓN */}
+        
+        
         <div className="mb-8 flex justify-center md:mb-10 md:justify-start">
-          <Link href="/recursos-informativos" className="group inline-flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900">
+          {/* Unificado: text-muted y hover:text-primary */}
+          <Link href="/recursos-informativos" className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-primary">
             <span aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
             Volver a recursos
           </Link>
         </div>
 
         {/* TÍTULO */}
-        <h1 className="mx-auto max-w-4xl text-center text-3xl font-extrabold tracking-tight text-cite-teal-dark sm:text-4xl lg:text-5xl lg:leading-[1.15]">
+        {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
+        <h1 className="mx-auto max-w-4xl text-center text-3xl font-extrabold tracking-tight text-primary sm:text-4xl lg:text-5xl lg:leading-[1.15]">
           {article.title}
         </h1>
         
@@ -70,24 +68,26 @@ try {
 
         {/* IMAGEN PRINCIPAL */}
         {article.imageUrl && (
-          <figure className="mb-12 overflow-hidden rounded-2xl border border-neutral-200/60 bg-neutral-50 shadow-sm">
+        
+          <figure className="mb-12 overflow-hidden rounded-2xl border border-gray-200/60 bg-base shadow-sm">
             <img src={article.imageUrl} alt={article.title} className="aspect-[16/9] w-full object-cover transition-transform duration-700 hover:scale-105" />
           </figure>
         )}
 
         {/* CUERPO DEL ARTÍCULO */}
-        <article className="prose prose-neutral mx-auto max-w-none prose-p:text-lg prose-p:leading-8 prose-p:text-neutral-700">
+        {/* Unificado: prose-p:text-secondary en lugar de prose-p:text-neutral-700 */}
+        <article className="prose prose-neutral mx-auto max-w-none prose-p:text-lg prose-p:leading-8 prose-p:text-secondary">
           {paragraphs.map((paragraph, index) => (
             <p key={index} className="mb-6">{paragraph}</p>
           ))}
         </article>
 
-        {/* CITACIÓN (Asumiendo que ArticleAPA maneja su propio "use client" internamente) */}
+        {/* CITACIÓN */}
         {ArticleAPA && <ArticleAPA citation={citation} />}
       </main>
     );
   } catch (error) {
     console.error("Error al cargar el artículo desde BD:", error);
-    return <div className="text-center py-20">Error al conectar con la base de datos.</div>;
+    return <div className="py-20 text-center text-secondary">Error al conectar con la base de datos.</div>;
   }
 }

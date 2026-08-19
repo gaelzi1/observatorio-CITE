@@ -5,18 +5,14 @@ export default function Hero({
   subtitle,
   description,
   logo = "/logo_cite.svg",
-  backgroundColor = "#457695",
-  textColor = "#ffffff",
+  // Eliminamos backgroundColor y textColor de las props porque 
+  // ahora dejaremos que Tailwind maneje la semántica visual.
 }) {
   return (
-    <section
-      className="w-full"
-      style={{
-        backgroundColor,
-        color: textColor,
-      }}
-    >
-      <div className="mx-auto flex max-w-6xl items-center  gap-10 px-6 py-14 sm:flex-row flex-col  ">
+   
+    <section className="w-full bg-primary text-inverse">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-10 px-6 py-14 sm:flex-row">
+        
         {/* Logo */}
         <div className="flex h-[220px] w-[220px] flex-shrink-0 items-center justify-center">
           <Image
@@ -33,6 +29,8 @@ export default function Hero({
             {title}
           </h1>
 
+          {/* Mantener opacity-80 aquí es una excelente práctica cuando el texto es inverse (blanco), 
+              así no tienes que crear una variable extra solo para "blanco con opacidad" */}
           <p className="mt-2 text-sm uppercase tracking-[0.2em] opacity-80">
             {subtitle}
           </p>

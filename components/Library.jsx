@@ -5,7 +5,6 @@ import DocumentCard from "./DocumentCard";
 import LibraryFilters from "./LibraryFilters";
 import LibraryPagination from "./LibraryPagination";
 
-
 const LIMIT = 6;
 
 const CONTENT_TYPES = [
@@ -41,7 +40,6 @@ export default function Library() {
 
   const [typeFilter, setTypeFilter] = useState("");
 
-  // Cargar Categorías (y Autores si tienes el endpoint)
   useEffect(() => {
     async function loadFilters() {
       try {
@@ -56,7 +54,6 @@ export default function Library() {
     loadFilters();
   }, []);
 
-  // Cargar Artículos
   useEffect(() => {
     const controller = new AbortController();
 
@@ -79,7 +76,6 @@ export default function Library() {
           signal: controller.signal,
         });
 
-
         if (!res.ok) throw new Error("Error de red");
 
         const data = await res.json();
@@ -98,7 +94,6 @@ export default function Library() {
     return () => controller.abort();
   }, [search, category, author, sort, year, typeFilter, currentPage]);
 
-  // Manejadores
   const handleSearch = () => { setCurrentPage(1); setSearch(query.trim()); };
   const handleKeyDown = (e) => { if (e.key === "Enter") handleSearch(); };
   const handleCategoryChange = (val) => { setCategory(val); setCurrentPage(1); };
@@ -114,164 +109,144 @@ export default function Library() {
   const hasActiveFilters = search || category || author || year || typeFilter || sort !== "recent";
 
   return (
-  <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-    {/* =========================================
-        CABECERA SUPERIOR
-        ========================================= */}
-    <div className="mb-6 flex flex-col gap-5 border-b border-black/5 pb-6 sm:mb-8 sm:gap-4 md:flex-row md:items-center md:justify-between">
-      
-      <h2 className="text-xl font-bold uppercase tracking-wide text-cite-teal-dark sm:text-2xl">
-        Biblioteca
-      </h2>
+    <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+      <div className="mb-6 flex flex-col gap-5 border-b border-gray-200 pb-6 sm:mb-8 sm:gap-4 md:flex-row md:items-center md:justify-between">
+        <h2 className="text-xl font-bold uppercase tracking-wide text-primary sm:text-2xl">
+          Biblioteca
+        </h2>
 
-      {/* BUSCADOR */}
-      <div className="flex w-full overflow-hidden rounded-md border border-black/10 bg-white shadow-sm md:max-w-md">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Escribe tu búsqueda"
-          className="
-            min-w-0
-            flex-1
-            px-3
-            py-2.5
-            text-sm
-            outline-none
-            placeholder:text-neutral-400
-            sm:px-4
-          "
-        />
+        <div className="flex w-full overflow-hidden rounded-md border border-gray-200 bg-surface shadow-sm md:max-w-md">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Escribe tu búsqueda"
+            className="
+              min-w-0
+              flex-1
+              px-3
+              py-2.5
+              text-sm
+              outline-none
+              placeholder:text-muted
+              sm:px-4
+              bg-transparent
+            "
+          />
 
-        <button
-          type="button"
-          onClick={handleSearch}
-          className="
-            shrink-0
-            bg-cite-teal-dark
-            px-3
-            py-2.5
-            text-sm
-            font-medium
-            text-white
-            transition-colors
-            hover:bg-cite-teal
-            sm:px-5
-          "
-        >
-          Buscar
-        </button>
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="
+              shrink-0
+              bg-primary
+              px-3
+              py-2.5
+              text-sm
+              font-medium
+              text-inverse
+              transition-opacity
+              hover:opacity-90
+              sm:px-5
+            "
+          >
+            Buscar
+          </button>
+        </div>
       </div>
-    </div>
 
-    {/* =========================================
-        FILTROS
-        ========================================= */}
-    <div className="mb-6 w-full sm:mb-8">
-      <LibraryFilters
-        author={author}
-        authors={authors}
-        handleAuthorChange={handleAuthorChange}
-        typeFilter={typeFilter}
-        resourceTypes={CONTENT_TYPES}
-        handleTypeChange={handleTypeChange}
-        category={category}
-        categories={categories}
-        handleCategoryChange={handleCategoryChange}
-        sort={sort}
-        handleSortChange={handleSortChange}
-        year={year}
-        handleYearChange={handleYearChange}
-        hasActiveFilters={hasActiveFilters}
-        clearFilters={clearFilters}
-      />
-    </div>
+      <div className="mb-6 w-full sm:mb-8">
+        <LibraryFilters
+          author={author}
+          authors={authors}
+          handleAuthorChange={handleAuthorChange}
+          typeFilter={typeFilter}
+          resourceTypes={CONTENT_TYPES}
+          handleTypeChange={handleTypeChange}
+          category={category}
+          categories={categories}
+          handleCategoryChange={handleCategoryChange}
+          sort={sort}
+          handleSortChange={handleSortChange}
+          year={year}
+          handleYearChange={handleYearChange}
+          hasActiveFilters={hasActiveFilters}
+          clearFilters={clearFilters}
+        />
+      </div>
 
-    {/* =========================================
-        RESULTADOS
-        ========================================= */}
-    <div className="w-full">
-      
-      {/* LOADING */}
-      {loading && (
-        <div className="flex w-full items-center justify-center py-12">
-          <p className="text-sm text-neutral-500">
-            Cargando artículos...
-          </p>
-        </div>
-      )}
+      <div className="w-full">
+        {loading && (
+          <div className="flex w-full items-center justify-center py-12">
+            <p className="text-sm text-muted">
+              Cargando artículos...
+            </p>
+          </div>
+        )}
 
-      {/* ERROR */}
-      {!loading && error && (
-        <div className="flex w-full items-center justify-center py-12">
-          <p className="text-center text-sm text-red-600">
-            {error}
-          </p>
-        </div>
-      )}
+        {!loading && error && (
+          <div className="flex w-full items-center justify-center py-12">
+            <p className="text-center text-sm text-red-600">
+              {error}
+            </p>
+          </div>
+        )}
 
-      {/* SIN RESULTADOS */}
-      {!loading && !error && documentos.length === 0 && (
-        <div className="flex w-full items-center justify-center py-12">
-          <p className="text-center text-sm text-neutral-500">
-            No se encontraron artículos para tu búsqueda.
-          </p>
-        </div>
-      )}
+        {!loading && !error && documentos.length === 0 && (
+          <div className="flex w-full items-center justify-center py-12">
+            <p className="text-center text-sm text-muted">
+              No se encontraron artículos para tu búsqueda.
+            </p>
+          </div>
+        )}
 
-      {/* =========================================
-          LISTA DE ARTÍCULOS
-          ========================================= */}
-      {!loading && !error && documentos.length > 0 && (
-        <div
-          className="
-            grid
-            w-full
-            grid-cols-1
-            gap-6
-            sm:grid-cols-2
-            sm:gap-7
-            lg:grid-cols-2
-            lg:gap-8
-            xl:gap-10
-          "
-        >
-          {documentos.map((article) => (
-            <div
-              key={article._id}
-              className="min-w-0"
-            >
-              <DocumentCard
-                id={article._id}
-                slug={article.slug}
-                title={article.title}
-                author={article.author || article.autor}
-                description={article.description}
-                category={article.category}
-                imageUrl={article.imageUrl}
-                typeOfComponent={article.typeOfComponent}
+        {!loading && !error && documentos.length > 0 && (
+          <div
+            className="
+              grid
+              w-full
+              grid-cols-1
+              gap-6
+              sm:grid-cols-2
+              sm:gap-7
+              lg:grid-cols-2
+              lg:gap-8
+              xl:gap-10
+            "
+          >
+            {documentos.map((article) => (
+              <div
+                key={article._id}
+                className="min-w-0"
+              >
+                <DocumentCard
+                  id={article._id}
+                  slug={article.slug}
+                  title={article.title}
+                  author={article.author || article.autor}
+                  description={article.description}
+                  category={article.category}
+                  imageUrl={article.imageUrl}
+                  typeOfComponent={article.typeOfComponent}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && totalPages > 1 && (
+          <div className="mt-8 flex w-full justify-center sm:mt-10 lg:mt-12">
+            <div className="max-w-full overflow-x-auto px-1">
+              <LibraryPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                setCurrentPage={setCurrentPage}
               />
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* =========================================
-          PAGINACIÓN
-          ========================================= */}
-      {!loading && totalPages > 1 && (
-        <div className="mt-8 flex w-full justify-center sm:mt-10 lg:mt-12">
-          <div className="max-w-full overflow-x-auto px-1">
-            <LibraryPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              setCurrentPage={setCurrentPage}
-            />
           </div>
-        </div>
-      )}
-    </div>
-  </section>
-);
+        )}
+      </div>
+    </section>
+  );
 }

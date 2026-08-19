@@ -28,7 +28,8 @@ export default function CarouselCard({ article }) {
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-cite-teal-dark text-6xl font-bold text-white">
+       
+        <div className="absolute inset-0 flex items-center justify-center bg-primary text-6xl font-bold text-inverse">
           {categoria.charAt(0)}
         </div>
       )}
@@ -38,11 +39,13 @@ export default function CarouselCard({ article }) {
 
       {/* 3. METADATOS Y TÍTULO */}
       <div className="relative z-10 mt-auto flex flex-col p-5 sm:p-6">
-        <p className="mb-2 text-[11px] font-semibold tracking-wider text-gray-800">
+        {/* Unificado: text-muted en lugar de text-gray-800 para los metadatos */}
+        <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted">
           {tipo} <span className="mx-1 text-gray-400">|</span> {categoria}
         </p>
 
-        <h3 className="line-clamp-3 text-lg font-medium leading-snug text-black sm:text-xl">
+        {/* Unificado: text-primary en lugar de text-black para darle peso al título con el color de la marca */}
+        <h3 className="line-clamp-3 text-lg font-medium leading-snug text-primary sm:text-xl">
           {article.title}
         </h3>
       </div>
