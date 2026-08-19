@@ -29,7 +29,6 @@ export default function ArticleCarousel() {
         const data = await res.json();
         const rawArticles = data.data || [];
 
-        // Si tienes pocos publicados para probar, puedes quitar el filter temporalmente
         const publishedArticles = rawArticles
           .filter((article) => article.published !== false)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -46,10 +45,8 @@ export default function ArticleCarousel() {
     loadArticles();
   }, []);
 
-  // Activar carrusel si hay más elementos que los visibles en pantalla
   const isCarousel = articles.length > cardsPerView;
 
-  // Pista extendida para loop continuo
   const track = useMemo(() => {
     if (!isCarousel) return articles;
     const head = articles.slice(-cardsPerView);
@@ -144,7 +141,8 @@ export default function ArticleCarousel() {
 
   if (loading) {
     return (
-      <div className="py-16 text-center text-neutral-500">
+    
+      <div className="py-16 text-center text-muted">
         <p className="animate-pulse">Cargando recursos...</p>
       </div>
     );
@@ -152,18 +150,20 @@ export default function ArticleCarousel() {
 
   if (articles.length === 0) {
     return (
-      <div className="py-16 text-center text-neutral-500">
+    
+      <div className="py-16 text-center text-muted">
         <p>No hay recursos publicados en este momento.</p>
       </div>
     );
   }
 
-  // Si hay pocos recursos, se muestra en Grid centrado
   if (!isCarousel) {
     return (
-      <section className="w-full bg-gray-100 py-16">
+     
+      <section className="w-full bg-base py-16">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-8 px-4">
-          <h2 className="text-xl font-bold text-cite-teal-dark sm:text-2xl lg:text-3xl">
+          {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
+          <h2 className="text-xl font-bold text-primary sm:text-2xl lg:text-3xl">
             Artículos Recientes
           </h2>
           <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -179,9 +179,12 @@ export default function ArticleCarousel() {
   const slideWidth = `${100 / cardsPerView}%`;
 
   return (
-    <section className="w-full overflow-hidden bg-gray-100 px-3 py-12 sm:px-4 sm:py-16 md:px-6 lg:px-8">
+
+    <section className="w-full overflow-hidden bg-base px-3 py-12 sm:px-4 sm:py-16 md:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-6 sm:gap-8">
-        <h2 className="px-2 text-center text-xl font-bold text-cite-teal-dark sm:text-2xl lg:text-3xl">
+        
+        {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
+        <h2 className="px-2 text-center text-xl font-bold text-primary sm:text-2xl lg:text-3xl">
           Artículos Recientes
         </h2>
 
@@ -222,7 +225,8 @@ export default function ArticleCarousel() {
             type="button"
             onClick={previousArticle}
             aria-label="Artículo anterior"
-            className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white sm:flex sm:p-2.5 md:-translate-x-4"
+           
+            className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:-translate-x-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
               <path d="M12 5l-5 5 5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
@@ -234,7 +238,8 @@ export default function ArticleCarousel() {
             type="button"
             onClick={nextArticle}
             aria-label="Siguiente artículo"
-            className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-white/90 p-2 text-cite-teal-dark shadow-sm backdrop-blur transition hover:border-cite-teal-dark hover:bg-white sm:flex sm:p-2.5 md:translate-x-4"
+      
+            className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:translate-x-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
               <path d="M8 5l5 5-5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
@@ -251,7 +256,8 @@ export default function ArticleCarousel() {
                 onClick={() => goToArticle(i)}
                 className={cx(
                   "h-2 rounded-full transition-all",
-                  i === activeDot ? "w-6 bg-cite-teal-dark" : "w-2 bg-gray-300 hover:bg-gray-400"
+                
+                  i === activeDot ? "w-6 bg-primary" : "w-2 bg-gray-300 hover:bg-gray-400"
                 )}
               />
             ))}

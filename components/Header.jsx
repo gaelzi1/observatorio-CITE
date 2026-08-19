@@ -16,7 +16,8 @@ export default function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-black/5 bg-white/90 backdrop-blur-sm">
+    
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-surface/90 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
         <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
           <Image
@@ -30,15 +31,18 @@ export default function Header() {
 
         {/* NAV DESKTOP */}
         <nav className="hidden md:block">
-          <ul className="flex flex-wrap items-center gap-6 text-sm text-cite-teal-dark">
+          {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
+          <ul className="flex flex-wrap items-center gap-6 text-sm text-primary">
             {NAV_ITEMS.map((item) => (
               <li key={item.label}>
                 <Link
                   href={item.href}
-                  className="group relative py-1 transition-colors hover:text-cite-coral focus:outline-none focus-visible:ring-2 focus-visible:ring-cite-teal-dark focus-visible:ring-offset-2 rounded"
+                  
+                  className="group relative rounded py-1 transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
                 >
                   {item.label}
-                  <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-cite-coral transition-transform duration-200 ease-out group-hover:scale-x-100" />
+                  {/* Unificado: bg-accent en lugar de bg-cite-coral */}
+                  <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-accent transition-transform duration-200 ease-out group-hover:scale-x-100" />
                 </Link>
               </li>
             ))}
@@ -52,7 +56,8 @@ export default function Header() {
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-cite-teal-dark transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-cite-teal-dark focus-visible:ring-offset-2 md:hidden"
+          
+          className="flex h-9 w-9 items-center justify-center rounded-md text-primary transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 md:hidden"
         >
           <span className="relative block h-4 w-5">
             <span
@@ -81,13 +86,15 @@ export default function Header() {
           open ? "max-h-96" : "max-h-0"
         }`}
       >
-        <ul className="flex flex-col gap-1 border-t border-black/5 px-6 py-3 text-sm text-cite-teal-dark">
+    
+        <ul className="flex flex-col gap-1 border-t border-gray-200 px-6 py-3 text-sm text-primary">
           {NAV_ITEMS.map((item) => (
             <li key={item.label}>
               <Link
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="block rounded-md px-2 py-2 transition-colors hover:bg-neutral-50 hover:text-cite-coral focus:outline-none focus-visible:ring-2 focus-visible:ring-cite-teal-dark"
+               
+                className="block rounded-md px-2 py-2 transition-colors hover:bg-base hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 {item.label}
               </Link>
