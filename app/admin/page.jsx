@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AdminForm from "@/components/AdminForm";
 import AdminTable from "@/components/AdminTable";
+import { useRouter } from "next/navigation";
 
 export default function AdminPage() {
   const [articles, setArticles] = useState([]);
@@ -31,6 +32,16 @@ export default function AdminPage() {
     materialType: "",
     doiOrUrl: "",
   });
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/logout", { method: "POST" });
+      if (res.ok) {
+        router.push("/login"); // Redirige de vuelta al login
+      }
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+  };
 
   async function loadArticles() {
     try {
@@ -86,8 +97,7 @@ console.log("Enviando a:", url, "| Método:", method, "| ID:", editingId);
     setForm({
       title: article.title || "",
       category: article.category || "",
-      
-      // 👇 Manejo seguro para que siempre sea string en el input 👇
+    
       author: Array.isArray(article.author)
         ? article.author.join(", ")
         : article.author || article.autor || "",
@@ -160,11 +170,21 @@ console.log("Enviando a:", url, "| Método:", method, "| ID:", editingId);
 
   return (
     <main className="min-h-screen bg-white px-6 py-6">
+     
       <div className="mx-auto max-w-6xl">
-        {/* VOLVER Y TÍTULO */}
+        <div className="flex items-center justify-between">
         <a href="/" className="text-sm text-cite-teal-dark hover:underline">
           ← Volver al listado público
         </a>
+        <a href="/">
+        <button 
+            onClick={handleLogout}
+            className="text-sm font-medium text-red-600 hover:text-red-800 hover:underline"
+          >
+            Cerrar Sesión
+          </button>
+          </a>
+          </div>
         <h1 className="mt-7 text-2xl font-bold text-black">
           Administrar artículos de la Biblioteca
         </h1>

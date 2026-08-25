@@ -115,7 +115,7 @@ export default function Library() {
           Biblioteca
         </h2>
 
-        <div className="flex w-full overflow-hidden rounded-md border border-gray-200 bg-surface shadow-sm md:max-w-md">
+        <div className="flex w-full overflow-hidden rounded-md   bg-surface shadow-sm md:max-w-md">
           <input
             type="text"
             value={query}
@@ -202,23 +202,12 @@ export default function Library() {
         )}
 
         {!loading && !error && documentos.length > 0 && (
-          <div
-            className="
-              grid
-              w-full
-              grid-cols-1
-              gap-6
-              sm:grid-cols-2
-              sm:gap-7
-              lg:grid-cols-2
-              lg:gap-8
-              xl:gap-10
-            "
-          >
+        
+          <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-2 lg:gap-8 xl:gap-10">
             {documentos.map((article) => (
               <div
                 key={article._id}
-                className="min-w-0"
+                className="min-w-0 h-full   "
               >
                 <DocumentCard
                   id={article._id}

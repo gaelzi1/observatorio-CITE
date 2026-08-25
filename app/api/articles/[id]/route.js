@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
-import { Types } from "mongoose";
 import { createSlug } from "@/utils/slugify";
+import { cookies } from "next/headers"; 
 export async function GET(request, { params }) {
   try {
     await dbConnect();
@@ -38,6 +38,11 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const cokieStore =cookies();
+  const token = cokieStore.get("sesion_token")?.value;
+  if (!token){
+    return NextResponse.json({message:"no autorizado"},{status:401})
+  }
   try {
     await dbConnect();
     
@@ -53,15 +58,12 @@ export async function PUT(request, { params }) {
 
     const body = await request.json();
 
-    // 1. Buscamos el artículo original en la base de datos
     const existingArticle = await Article.findById(id);
     if (!existingArticle) {
       return NextResponse.json({ message: "Artículo no encontrado" }, { status: 404 });
     }
 
-    // 2. Lógica segura para el Slug: 
-    // Si ya tiene slug, lo respetamos para no romper los enlaces. 
-    // Si no tiene (porque es un artículo viejo), se lo creamos.
+    
     const finalSlug = existingArticle.slug || createSlug(body.title);
 
     const formattedAuthors = Array.isArray(body.author)
@@ -116,6 +118,11 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+   const cokieStore =cookies();
+  const token = cokieStore.get("sesion_token")?.value;
+  if (!token){
+    return NextResponse.json({message:"no autorizado"},{status:401})
+  }
   try {
    
     await dbConnect();
