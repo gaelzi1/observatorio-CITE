@@ -22,7 +22,7 @@ export default function DocumentCard({
   const buttonText = ACTION_LABELS[typeOfComponent] || "Ver recurso";
   
   return (
-    <article className="flex gap-4 border-b border-gray-200 py-6">
+    <article className="flex flex-row gap-4 h-full border-b border-gray-200 py-6  ">
       <div className="h-24 w-32 shrink-0 overflow-hidden rounded">
         <a href={`/articles/${slug}`} className="block h-full w-full">
         {imageUrl ? (

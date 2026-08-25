@@ -65,9 +65,9 @@ export default function LibraryFilters({
     SORT_OPTIONS.find((s) => s.value === sort)?.label || sort;
 
   return (
-    <div className="flex w-full flex-col gap-5 border-t border-gray-200 pt-4">
+    <div className="flex w-full flex-col gap-5 pt-2">
       <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end lg:gap-3">
-        
+
         <div className="flex min-w-0 flex-col gap-1 sm:col-span-2 lg:w-auto">
           <label
             htmlFor="author-filter"
@@ -87,7 +87,7 @@ export default function LibraryFilters({
                   handleAuthorChange(localAuthor.trim());
                 }
               }}
-              placeholder="Buscar autor..."
+              placeholder="Buscar por autor..."
               className="
                 min-w-0
                 flex-1
@@ -155,7 +155,7 @@ export default function LibraryFilters({
             htmlFor="type-filter"
             className="text-xs font-medium text-muted"
           >
-            Recursos
+            Tipo de recurso
           </label>
 
           <select
@@ -329,7 +329,7 @@ export default function LibraryFilters({
       {hasActiveFilters && (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <span className="shrink-0 text-xs font-medium text-muted">
-            Filtros activos:
+            Filtros aplicados:
           </span>
 
           <div className="flex flex-wrap gap-2">
