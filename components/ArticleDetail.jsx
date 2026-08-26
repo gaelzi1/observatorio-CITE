@@ -46,7 +46,7 @@ export default async function ArticleDetail({slug}) {
         
         <div className="mb-8 flex justify-center md:mb-10 md:justify-start">
           {/* Unificado: text-muted y hover:text-primary */}
-          <Link href="/recursos-informativos" className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-primary">
+          <Link href="/" className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-primary">
             <span aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
             Volver a recursos
           </Link>

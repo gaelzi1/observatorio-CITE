@@ -16,6 +16,7 @@ export default function DocumentCard({
   slug,
   category,
   imageUrl,
+  year,
   author,
   typeOfComponent,
 }) {
@@ -48,6 +49,7 @@ export default function DocumentCard({
         <p className="mt-1 text-xs uppercase tracking-[0.2em] text-muted">
           {category}
         </p> 
+       
         <p className="mt-2 flex items-center gap-2 text-sm text-secondary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
