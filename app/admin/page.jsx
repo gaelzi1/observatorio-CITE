@@ -6,6 +6,7 @@ import AdminTable from "@/components/AdminTable";
 import { useRouter } from "next/navigation";
 
 export default function AdminPage() {
+  const router = useRouter();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState("");
