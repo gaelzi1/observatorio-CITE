@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
 import { createSlug } from "@/utils/slugify";
-import { cookies } from "next/headers"; 
+import { getAdminSession } from "@/lib/auth";
 export async function GET(request, { params }) {
   try {
     await dbConnect();
@@ -38,11 +38,11 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  const cokieStore =cookies();
-  const token = cokieStore.get("sesion_token")?.value;
-  if (!token){
-    return NextResponse.json({message:"no autorizado"},{status:401})
+  const adminSession = await getAdminSession();
+  if (!adminSession) {
+    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
+
   try {
     await dbConnect();
     
@@ -118,11 +118,11 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-   const cokieStore =cookies();
-  const token = cokieStore.get("sesion_token")?.value;
-  if (!token){
-    return NextResponse.json({message:"no autorizado"},{status:401})
+  const adminSession = await getAdminSession();
+  if (!adminSession) {
+    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
+
   try {
    
     await dbConnect();
