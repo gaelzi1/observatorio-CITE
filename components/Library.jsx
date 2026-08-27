@@ -216,6 +216,7 @@ export default function Library() {
                   author={article.author || article.autor}
                   description={article.description}
                   category={article.category}
+                  dateOfPublication={article.dateOfPublication}
                   imageUrl={article.imageUrl}
                   typeOfComponent={article.typeOfComponent}
                 />

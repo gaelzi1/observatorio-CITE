@@ -16,14 +16,26 @@ export default function DocumentCard({
   slug,
   category,
   imageUrl,
-  year,
+  dateOfPublication,
   author,
   typeOfComponent,
 }) {
   const buttonText = ACTION_LABELS[typeOfComponent] || "Ver recurso";
   
+  // 1. Creamos el formateador de la fecha
+  const formattedDate = dateOfPublication
+ 
+    ? new Date(dateOfPublication).toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
+  
+  
   return (
-    <article className="flex flex-row gap-4 h-full border-b border-gray-200 py-6  ">
+    <article className="flex flex-row gap-4 h-full border-b border-gray-200 py-6">
       <div className="h-24 w-32 shrink-0 overflow-hidden rounded">
         <a href={`/articles/${slug}`} className="block h-full w-full">
         {imageUrl ? (
@@ -42,14 +54,23 @@ export default function DocumentCard({
 
       <div>
         <a href={`/articles/${slug}`} className="underline-offset-1 hover:underline">
-        <h3 className="text-sm font-semibold text-primary">
-          {title}
-        </h3>
+          <h3 className="text-sm font-semibold text-primary">
+            {title}
+          </h3>
         </a>
-        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-muted">
-          {category}
-        </p> 
-       
+        
+        {/* Agrupé la categoría y la fecha para que se vean bien juntas */}
+        <div className="mt-1 flex items-center gap-2 text-xs text-muted">
+          <span className="uppercase tracking-[0.2em]">{category}</span>
+          {formattedDate && (
+            <>
+            
+              <span>•</span>
+              <time dateTime={dateOfPublication}>{formattedDate}</time>
+            </>
+          )}
+        </div> 
+
         <p className="mt-2 flex items-center gap-2 text-sm text-secondary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -69,12 +90,14 @@ export default function DocumentCard({
           <span className="font-medium text-primary">Autor:</span>
           <span>{author || "Desconocido"}</span>
         </p>
+        
         <p className="mt-2 text-sm leading-relaxed text-secondary">
           {description}
         </p>
+        
         <a 
           href={`/articles/${slug}`} 
-          className="mt-4 inline-block text-primary transition-opacity hover:opacity-80"
+          className="mt-4 inline-block text-primary transition-opacity hover:opacity-80 font-medium text-sm"
         >
           {buttonText}
         </a>
