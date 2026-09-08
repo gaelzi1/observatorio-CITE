@@ -2,61 +2,26 @@
 
 import { useRef, useState, useEffect } from "react";
 
-const timelineData = [
-  {
-    year: "2020",
-    category: "Fundación",
-    title: "Inicio del proyecto del Observatorio CITE",
-    description: "Se establecen las bases para la creación de un espacio dedicado al análisis y seguimiento de las competencias digitales.",
-    keywords: ["Competencias", "Investigación"],
-  },
-  {
-    year: "2021",
-    category: "Investigación",
-    title: "Primeros estudios sobre competencias",
-    description: "Se desarrollan investigaciones para identificar las principales necesidades digitales dentro del ámbito educativo.",
-    keywords: ["Brecha digital", "Educación"],
-  },
-  {
-    year: "2022",
-    category: "Colaboración",
-    title: "Nuevas líneas de investigación",
-    description: "El observatorio amplía sus áreas de trabajo mediante nuevas líneas de análisis y colaboración institucional.",
-    keywords: ["Colaboración", "Tecnología"],
-  },
-  {
-    year: "2023",
-    category: "Desarrollo",
-    title: "Consolidación de la plataforma digital",
-    description: "Se fortalece la presencia digital del observatorio mediante nuevas herramientas para consulta de información.",
-    keywords: ["Plataforma", "Datos"],
-  },
-  {
-    year: "2024",
-    category: "Expansión",
-    title: "Ampliación del repositorio",
-    description: "Se incorporan nuevos contenidos, publicaciones y recursos relacionados con las competencias digitales.",
-    keywords: ["Publicaciones", "Recursos"],
-  },
-  {
-    year: "2025",
-    category: "Actualización",
-    title: "Nueva etapa del Observatorio",
-    description: "Se inicia una nueva etapa enfocada en mejorar la accesibilidad y organización de la información para el usuario.",
-    keywords: ["UX", "Accesibilidad"],
-  },
-  {
-    year: "2026",
-    category: "Innovación",
-    title: "Herramientas para el análisis",
-    description: "Se incorporan nuevas herramientas digitales interactivas para facilitar el análisis y visualización de información.",
-    keywords: ["Innovación", "Datos"],
-  },
-];
+
 
 export default function InstitutionalTimeline() {
   const timelineRef = useRef(null);
+  const [timelineData, setTimelineData] = useState([]);
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    async function fetchTimelineData() {
+      try {
+        const res = await fetch("/api/timeline");
+        if (!res.ok) throw new Error("Error al cargar la línea de tiempo");
+        const data = await res.json();
+        setTimelineData(data.data || []);
+      } catch (error) {
+        console.error("Error al cargar la línea de tiempo:", error);
+      }
+    }
+    fetchTimelineData();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
