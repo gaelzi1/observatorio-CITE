@@ -233,7 +233,7 @@ export default function ArticleCarousel() {
             </svg>
           </button>
 
-          {/* Flecha Siguiente */}
+          {/* Flecha Siguiente */}  
           <button
             type="button"
             onClick={nextArticle}

@@ -48,7 +48,6 @@ export default function LoginPage() {
         {error && (
           <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
         )}
-
         <div>
           <label className="block text-sm font-medium text-gray-700">Correo</label>
           <input
