@@ -9,10 +9,6 @@ export function createSlug(title) {
     .trim()
     .replace(/\s+/g, "-") // Reemplaza espacios por guiones
     .replace(/-+/g, "-"); // Evita guiones dobles (ej: mi---titulo -> mi-titulo)
-
-  // Le agregamos un código corto al final (ej: -a7b2) para evitar que dos 
-  // artículos con el mismo título rompan la base de datos por duplicidad.
-  const uniqueSuffix = Math.random().toString(36).substring(2, 6);
-  
-  return `${baseSlug}-${uniqueSuffix}`;
+ 
+  return baseSlug;
 }

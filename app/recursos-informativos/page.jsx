@@ -1,6 +1,5 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import Biblioteca from "@/components/Library";
 import ArticleCarousel from "@/components/ArticleCarousel";
 import Library from "@/components/Library";
 export default function ResourcesPage() {

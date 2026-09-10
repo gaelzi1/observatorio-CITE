@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
 export default function ShareButtons({ title }) {
@@ -16,6 +17,7 @@ export default function ShareButtons({ title }) {
   const shareTitle = encodeURIComponent(title);
 
   // 4. Si la URL aún está vacía (durante el servidor), le ponemos un "#" temporal
+  // Nota: Mantenemos los colores originales para las redes sociales por identidad de marca
   const shareLinks = [
     {
       label: "Compartir en Facebook",
@@ -49,7 +51,7 @@ export default function ShareButtons({ title }) {
 
   return (
     <div className="relative flex items-center gap-2">
-      <span className="mr-2 text-xs font-medium uppercase tracking-wider text-neutral-400">
+      <span className="mr-2 text-xs font-medium uppercase tracking-wider text-muted">
         Compartir
       </span>
       {shareLinks.map((link) => (
@@ -71,7 +73,7 @@ export default function ShareButtons({ title }) {
         onClick={copyLink}
         aria-label="Copiar enlace"
         title="Copiar enlace"
-        className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-surface text-secondary transition-all hover:-translate-y-0.5 hover:border-focus hover:bg-base hover:shadow-sm"
       >
         🔗
       </button>
@@ -79,7 +81,7 @@ export default function ShareButtons({ title }) {
       <span
         role="status"
         aria-live="polite"
-        className={`absolute -top-8 right-0 rounded bg-neutral-800 px-2 py-1 text-xs text-white transition-opacity duration-200 ${
+        className={`absolute -top-8 right-0 rounded bg-primary px-2 py-1 text-xs text-inverse transition-opacity duration-200 ${
           copied ? "opacity-100" : "opacity-0"
         }`}
       >

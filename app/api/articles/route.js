@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
 import { createSlug } from "@/utils/slugify";
+import { getAdminSession } from "@/lib/auth";
 
-export async function GET(request) {
+
+export async function GET(request) {  
   try {
     await dbConnect();
 
@@ -132,6 +134,11 @@ export async function GET(request) {
   }
 }
 export async function POST(request) {
+  const adminSession = await getAdminSession();
+  if (!adminSession) {
+    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
+  }
+
   try {
     await dbConnect();
 
