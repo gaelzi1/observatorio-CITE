@@ -28,7 +28,7 @@ export default function ArticleHeader({
       {/* 2. CONTENEDOR DE ETIQUETAS (Categoría + Tipo) */}
       <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
         {article.category && (
-        
+  
           <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
             {article.category}
           </span>

@@ -238,7 +238,6 @@ export default function ArticleCarousel() {
             type="button"
             onClick={nextArticle}
             aria-label="Siguiente artículo"
-      
             className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:translate-x-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
