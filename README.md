@@ -828,10 +828,7 @@ npm run seed
 ## Próximas Mejoras Sugeridas
 
 - [ ] Agregar pruebas unitarias (Jest)
-- [ ] Implementar upload de imágenes (Cloudinary o S3)
-- [ ] Agregar comentarios/reseñas en artículos
 - [ ] Sistema de favoritos/guardados
-- [ ] Exportar referencias en múltiples formatos (BibTeX, Chicago, etc.)
 - [ ] Búsqueda full-text indexada
 - [ ] Analytics y estadísticas de uso
 - [ ] Multi-idioma (i18n)
