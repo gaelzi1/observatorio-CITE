@@ -31,7 +31,7 @@ export default function Header() {
 
         {/* NAV DESKTOP */}
         <nav className="hidden md:block">
-          {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
+        
           <ul className="flex flex-wrap items-center gap-6 text-sm text-primary">
             {NAV_ITEMS.map((item) => (
               <li key={item.label}>
@@ -41,7 +41,7 @@ export default function Header() {
                   className="group relative rounded py-1 transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
                 >
                   {item.label}
-                  {/* Unificado: bg-accent en lugar de bg-cite-coral */}
+               
                   <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-accent transition-transform duration-200 ease-out group-hover:scale-x-100" />
                 </Link>
               </li>
