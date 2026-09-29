@@ -5,8 +5,7 @@ export default function Hero({
   subtitle,
   description,
   logo = "/logo_cite.svg",
-  // Eliminamos backgroundColor y textColor de las props porque 
-  // ahora dejaremos que Tailwind maneje la semántica visual.
+
 }) {
   return (
    
