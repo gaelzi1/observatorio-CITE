@@ -1,23 +1,20 @@
-export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-// IMPORTANTE: Ajusta estas rutas de importación según la estructura de tu proyecto
 import dbConnect from "@/lib/mongodb";
 import Article from "@/models/Article"; 
 
+// Guarda la respuesta en la RAM del servidor por 1 hora
+export const revalidate = 3600;
+
 export async function GET() {
   try {
-    // 1. Conectar a la base de datos
     await dbConnect();
 
-    // 2. Obtener categorías únicas de los artículos publicados
     const uniqueCategories = await Article.distinct("category", { 
       category: { $nin: [null, ""] } 
     });
 
-    // 3. Ordenar alfabéticamente
     const sortedCategories = uniqueCategories.sort((a, b) => a.localeCompare(b));
 
-    // 4. Devolver la respuesta en formato JSON
     return NextResponse.json({ 
       success: true, 
       data: sortedCategories 

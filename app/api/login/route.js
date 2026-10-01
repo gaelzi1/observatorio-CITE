@@ -5,6 +5,7 @@ import Admin from "@/models/Admin";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 
+
 export async function POST(request) {
   try {
     const { email, password } = await request.json();

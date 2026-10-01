@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Timeline from "@/models/Timeline";
-
+export const revalidate = 3600;
 export async function GET() {
   try {
     await dbConnect();

@@ -1,11 +1,12 @@
-export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
+import { unstable_cache } from "next/cache";
 import dbConnect from "@/lib/mongodb";
 import { createSlug } from "@/utils/slugify";
 import { getAdminSession } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
-
+export const revalidate = 3600;
 export async function GET(request) {  
   try {
     await dbConnect();
@@ -106,14 +107,25 @@ export async function GET(request) {
     const sortQuery = SORT_MAP[sort] || SORT_MAP.recent;
     const skip = (page - 1) * limit;
 
-    const [articles, total] = await Promise.all([
-      Article.find(filter)
-        .sort(sortQuery)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Article.countDocuments(filter),
-    ]);
+    
+ // Usamos searchParams.toString() para capturar exactamente lo que el usuario 
+// escribió en la URL (ej. "author=juan&page=1") y usarlo como llave única.
+const cacheKey = `articles-cache-${searchParams.toString()}`;
+
+    // 3. Envolver la consulta a MongoDB en unstable_cache
+    const getCachedArticles = unstable_cache(
+      async () => {
+        return await Promise.all([
+          Article.find(filter).sort(sortQuery).skip(skip).limit(limit).lean(),
+          Article.countDocuments(filter),
+        ]);
+      },
+      [cacheKey], // Si alguien más busca exactamente lo mismo, usa esta llave
+      { revalidate: 3600 } // Guarda este resultado específico por 1 hora
+    );
+
+    // 4. Ejecutar la función en caché en lugar de consultar a Mongoose directamente
+    const [articles, total] = await getCachedArticles();
 
     return NextResponse.json({
       data: articles,
@@ -123,12 +135,8 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("Error en GET /api/articles:", error);
-
     return NextResponse.json(
-      {
-        message: "Error al obtener artículos",
-        error: error.message,
-      },
+      { message: "Error al obtener artículos", error: error.message },
       { status: 500 }
     );
   }
