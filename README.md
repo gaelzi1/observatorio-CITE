@@ -1,6 +1,6 @@
-#  Documentación - Observatorio CITE
+#  Documentación - Observatorio competencias digitales
 
-Una réplica del sitio "Observatorio CITE" construida con **Next.js 14 (App Router)**, **React 18**, **MongoDB** y **Tailwind CSS**.
+Una réplica del sitio "Observatorio competencias digitales" construida con **Next.js 14 (App Router)**, **React 18**, **MongoDB** y **Tailwind CSS**.
 
 ---
 
@@ -33,7 +33,7 @@ Este proyecto es una plataforma web para gestionar y consultar artículos, libro
 ## Estructura del Proyecto
 
 ```
-observatorio-cite/
+Observatorio competencias digitales/
 ├── app/                          # Rutas de Next.js (App Router)
 │   ├── api/
 │   │   ├── articles/            # CRUD de artículos
