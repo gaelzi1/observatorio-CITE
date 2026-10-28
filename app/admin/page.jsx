@@ -23,6 +23,7 @@ export default function AdminPage() {
     publisher: "",
     journalName: "",
     volume: "",
+    issue: "",
     pages: "",
     edition: "",
     degree: "",
@@ -74,7 +75,6 @@ export default function AdminPage() {
     e.preventDefault();
     const url = editingId ? `/api/articles/${editingId}` : "/api/articles";
 const method = editingId ? "PUT" : "POST";
-console.log("Enviando a:", url, "| Método:", method, "| ID:", editingId);
     try {
       const res = await fetch(url, {
         method,
@@ -100,7 +100,7 @@ console.log("Enviando a:", url, "| Método:", method, "| ID:", editingId);
       category: article.category || "",
     
       author: Array.isArray(article.author)
-        ? article.author.join(", ")
+        ? article.author.join("; ") // Punto y coma: las comas son parte de "Apellido, N."
         : article.author || article.autor || "",
 
       imageUrl: article.imageUrl || "",
@@ -157,6 +157,7 @@ console.log("Enviando a:", url, "| Método:", method, "| ID:", editingId);
       publisher: "",
       journalName: "",
       volume: "",
+      issue: "",
       pages: "",
       edition: "",
       degree: "",

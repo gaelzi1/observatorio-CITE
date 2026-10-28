@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
-import { createSlug } from "@/utils/slugify";
+import { createUniqueSlug, parseAuthors, pickApaFields } from "@/lib/articles";
 import { getAdminSession } from "@/lib/auth";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
@@ -47,7 +47,7 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error("Error al obtener el artículo:", error);
     return NextResponse.json(
-      { message: "Error al obtener el artículo", error: error.message },
+      { message: "Error al obtener el artículo" },
       { status: 500 }
     );
   }
@@ -76,22 +76,14 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ message: "Artículo no encontrado" }, { status: 404 });
     }
 
-    
-    const finalSlug = existingArticle.slug || createSlug(body.title);
-
-    const formattedAuthors = Array.isArray(body.author)
-      ? body.author
-      : typeof body.author === "string" && body.author.trim()
-      ? body.author.includes(";")
-        ? body.author.split(";").map((a) => a.trim()).filter(Boolean)
-        : [body.author.trim()]
-      : [];
+    // El slug no cambia al editar para no romper enlaces ya compartidos
+    const finalSlug = existingArticle.slug || (await createUniqueSlug(body.title, id));
 
     const updatedArticle = await Article.findByIdAndUpdate(
       id,
       {
         title: body.title,
-        author: formattedAuthors,
+        author: parseAuthors(body.author),
         slug: finalSlug,
         description: body.description,
         content: body.content,
@@ -100,19 +92,7 @@ export async function PUT(request, { params }) {
         dateOfPublication: body.dateOfPublication,
         published: body.published,
         typeOfComponent: body.typeOfComponent || "other",
-        journalName: body.journalName || "",
-        volume: body.volume || "",
-        issue: body.issue || "",
-        pages: body.pages || "",
-        publisher: body.publisher || "",
-        edition: body.edition || "",
-        degree: body.degree || "",
-        institution: body.institution || "",
-        reportNumber: body.reportNumber || "",
-        conferenceName: body.conferenceName || "",
-        location: body.location || "",
-        materialType: body.materialType || "",
-        doiOrUrl: body.doiOrUrl || "",
+        ...pickApaFields(body),
       },
       {
         returnDocument: "after",  
@@ -125,8 +105,11 @@ export async function PUT(request, { params }) {
     return NextResponse.json(updatedArticle, { status: 200 });
   } catch (error) {
     console.error("Error en PUT /api/articles/[id]:", error);
+    if (error.name === "ValidationError" || error.name === "CastError") {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
     return NextResponse.json(
-      { message: "Error al actualizar el artículo", error: error.message },
+      { message: "Error al actualizar el artículo" },
       { status: 500 }
     );
   }

@@ -10,8 +10,9 @@ export async function GET() {
     // 1. Envolvemos la consulta directa a MongoDB en caché estricta
     const getCachedCategories = unstable_cache(
       async () => {
-        const uniqueCategories = await Article.distinct("category", { 
-          category: { $nin: [null, ""] } 
+        const uniqueCategories = await Article.distinct("category", {
+          category: { $nin: [null, ""] },
+          published: { $ne: false }, // Las categorías de borradores no se muestran
         });
         return uniqueCategories.sort((a, b) => a.localeCompare(b));
       },

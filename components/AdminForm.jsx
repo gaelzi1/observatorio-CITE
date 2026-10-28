@@ -31,7 +31,7 @@ export default function AdminForm({
         {/* AUTOR(ES) */}
         <div>
           <label className="mb-1 block text-sm text-primary">
-            Autor(es) <span className="text-xs text-neutral-400 font-normal">(Ej. Apellido, N. o varios separados por coma)</span>
+            Autor(es) <span className="text-xs text-neutral-400 font-normal">(Ej. Apellido, N. o varios separados por punto y coma)</span>
           </label>
           <input
             type="text"
@@ -39,7 +39,7 @@ export default function AdminForm({
             value={form.author}
             onChange={handleChange}
             required
-            placeholder="Ej. Pérez, J., López, M."
+            placeholder="Ej. Pérez, J.; López, M."
             className="w-full rounded border border-default bg-base px-3 py-2 outline-none focus:border-primary"
           />
         </div>
@@ -104,7 +104,7 @@ export default function AdminForm({
 
             {/* CAMPOS PARA REVISTA CIENTÍFICA */}
             {isJournal && (
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs text-primary">Nombre de la revista</label>
                   <input
@@ -117,13 +117,24 @@ export default function AdminForm({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-primary">Volumen (Número)</label>
+                  <label className="mb-1 block text-xs text-primary">Volumen</label>
                   <input
                     type="text"
                     name="volume"
                     value={form.volume || ""}
                     onChange={handleChange}
-                    placeholder="Ej. 14(2)"
+                    placeholder="Ej. 14"
+                    className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-cite-teal-dark"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-primary">Número</label>
+                  <input
+                    type="text"
+                    name="issue"
+                    value={form.issue || ""}
+                    onChange={handleChange}
+                    placeholder="Ej. 2"
                     className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-cite-teal-dark"
                   />
                 </div>

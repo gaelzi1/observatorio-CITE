@@ -48,10 +48,10 @@ const ArticleSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-      slug: {
+    slug: {
       type: String,
       required: true,
-    
+      unique: true, // Cada artículo necesita una URL distinta
     },
 
 
@@ -65,6 +65,10 @@ const ArticleSchema = new mongoose.Schema(
       default: "",
     },
     volume: {
+      type: String,
+      default: "",
+    },
+    issue: {
       type: String,
       default: "",
     },
