@@ -9,7 +9,7 @@ export default function Hero({
 }) {
   return (
    
-    <section className="w-full bg-primary text-inverse">
+    <section className="w-full bg-cite-teal text-inverse">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-10 px-6 py-14 sm:flex-row">
         
         {/* Logo */}

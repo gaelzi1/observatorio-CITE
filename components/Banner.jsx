@@ -17,7 +17,6 @@ const MENU = [
   { t: "Recursos informativos", href: "/recursos-informativos" },
 ];
 
-const TURQUESA = "#00B0AD";
 const GRIS = "#D6D6D6";
 
 /* Detecta si la pantalla es de escritorio (menú con hover) o móvil (acordeón).
@@ -82,7 +81,7 @@ export default function Banner() {
       </div>
 
       {/* Barra turquesa */}
-      <nav style={{ backgroundColor: TURQUESA }} aria-label="Principal">
+      <nav className="bg-cite-turquesa" aria-label="Principal">
         <div className="w-full px-6 xl:px-16">
           {/* Botón hamburguesa (solo en pantallas menores a xl) */}
           <button
@@ -131,7 +130,7 @@ export default function Banner() {
                           <Link
                             href={s.href}
                             onClick={() => { setAbierto(null); setMovil(false); }}
-                            className="block px-5 py-3 text-sm text-slate-700 transition-colors hover:bg-[#00B0AD] hover:text-white"
+                            className="block px-5 py-3 text-sm text-slate-700 transition-colors hover:bg-cite-turquesa hover:text-white"
                           >
                             {s.t}
                           </Link>

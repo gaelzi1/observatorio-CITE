@@ -7,14 +7,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Paleta basada en el turquesa del banner (#00B0AD).
+        // Todos los tonos de texto cumplen contraste AA sobre blanco.
         cite: {
-          teal: "#2f6273",
-          "teal-dark": "#234c5a",
-          "teal-light": "#5b8b98",
+          turquesa: "#00B0AD", // barra del banner y realces
+          teal: "#007A78", // turquesa oscuro: hero, texto secundario, foco
+          "teal-dark": "#005654", // turquesa profundo: títulos y botones
+          "teal-light": "#3F7A78", // turquesa apagado: texto tenue
           green: "#1c7a5e",
-          coral: "#e8624f",
-          // Reemplazamos 'cream' por un gris frío muy claro
-          "surface-light": "#f8fafc", 
+          coral: "#e8624f", // complementario del turquesa, para acentos
+          "surface-light": "#f3fafa", // fondo con un toque turquesa
         },
       },
       
@@ -37,7 +39,7 @@ module.exports = {
       }),
 
       borderColor: ({ theme }) => ({
-        DEFAULT: "#e5e7eb",
+        DEFAULT: "#d9ecec",
         focus: theme("colors.cite.teal"),
         accent: theme("colors.cite.coral"),
       }),
