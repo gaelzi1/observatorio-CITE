@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useCardsPerView } from "@/hooks/useCardsPerView";
 import CarouselCard from "./CarouselCard";
+import CarouselCardSkeleton from "./CarouselCardSkeleton";
 
 function cx(...args) {
   return args.filter(Boolean).join(" ");
@@ -139,129 +140,131 @@ export default function ArticleCarousel() {
     ? (((trackIndex - firstRealIndex) % articles.length) + articles.length) % articles.length
     : 0;
 
-  if (loading) {
-    return (
-    
-      <div className="py-16 text-center text-muted">
-        <p className="animate-pulse">Cargando recursos...</p>
-      </div>
-    );
-  }
+  const slideWidth = `${100 / (cardsPerView || 1)}%`;
 
-  if (articles.length === 0) {
-    return (
-    
-      <div className="py-16 text-center text-muted">
-        <p>No hay recursos publicados en este momento.</p>
-      </div>
-    );
-  }
+  // ÚNICO CONTENEDOR PARA TODOS LOS ESTADOS
+  return (
+    <section className="w-full overflow-hidden bg-base px-3 py-12 sm:px-4 sm:py-16 md:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-6 sm:gap-8">
+        
+        <h2 className="px-2 text-center text-xl font-bold text-primary sm:text-2xl lg:text-3xl">
+          Artículos Recientes
+        </h2>
 
-  if (!isCarousel) {
-    return (
-     
-      <section className="w-full bg-base py-16">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-8 px-4">
-          {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
-          <h2 className="text-xl font-bold text-primary sm:text-2xl lg:text-3xl">
-            Artículos Recientes
-          </h2>
+        {/* 1. ESTADO DE CARGA */}
+       {/* 1. ESTADO DE CARGA */}
+        {loading ? (
+          <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {/* 1er Skeleton: Siempre visible (Móvil, Tablet, PC) */}
+            <div className="block w-full">
+              <CarouselCardSkeleton />
+            </div>
+            
+            {/* 2do Skeleton: Oculto en móvil, visible en Tablet y PC */}
+            <div className="hidden w-full sm:block">
+              <CarouselCardSkeleton />
+            </div>
+            
+            {/* 3er Skeleton: Oculto en móvil y tablet, visible solo en PC */}
+            <div className="hidden w-full lg:block">
+              <CarouselCardSkeleton />
+            </div>
+          </div>
+        )
+        
+        
+        /* 2. ESTADO VACÍO */
+        : articles.length === 0 ? (
+          <div className="py-16 text-center text-muted">
+            <p>No hay recursos publicados en este momento.</p>
+          </div>
+        ) 
+        
+        /* 3. MODO GRID (Pocos artículos, no alcanza para carrusel) */
+        : !isCarousel ? (
           <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {articles.map((article) => (
               <CarouselCard key={article._id} article={article} />
             ))}
           </div>
-        </div>
-      </section>
-    );
-  }
-
-  const slideWidth = `${100 / cardsPerView}%`;
-
-  return (
-
-    <section className="w-full overflow-hidden bg-base px-3 py-12 sm:px-4 sm:py-16 md:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-6 sm:gap-8">
+        ) 
         
-        {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
-        <h2 className="px-2 text-center text-xl font-bold text-primary sm:text-2xl lg:text-3xl">
-          Artículos Recientes
-        </h2>
-
-        <div
-          className="relative w-full"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          {/* Pista deslizante */}
+        /* 4. MODO CARRUSEL (Muchos artículos) */
+        : (
           <div
-            className="overflow-hidden touch-pan-y"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            className="relative w-full"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
           >
+            {/* Pista deslizante */}
             <div
-              className={cx(
-                "flex -mx-1 sm:-mx-2 md:-mx-3",
-                withTransition && "transition-transform duration-500 ease-in-out motion-reduce:transition-none"
-              )}
-              style={{ transform: `translateX(-${trackIndex * (100 / cardsPerView)}%)` }}
-              onTransitionEnd={handleTransitionEnd}
+              className="overflow-hidden touch-pan-y"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              {track.map((article, i) => (
-                <div
-                  key={`${article._id}-${i}`}
-                  className="flex-shrink-0 px-1 sm:px-2 md:px-3"
-                  style={{ width: slideWidth }}
-                >
-                  <CarouselCard article={article} />
-                </div>
+              <div
+                className={cx(
+                  "flex -mx-1 sm:-mx-2 md:-mx-3",
+                  withTransition && "transition-transform duration-500 ease-in-out motion-reduce:transition-none"
+                )}
+                style={{ transform: `translateX(-${trackIndex * (100 / cardsPerView)}%)` }}
+                onTransitionEnd={handleTransitionEnd}
+              >
+                {track.map((article, i) => (
+                  <div
+                    key={`${article._id}-${i}`}
+                    className="flex-shrink-0 px-1 sm:px-2 md:px-3"
+                    style={{ width: slideWidth }}
+                  >
+                    <CarouselCard article={article} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Flecha Anterior */}
+            <button
+              type="button"
+              onClick={previousArticle}
+              aria-label="Artículo anterior"
+              className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:-translate-x-4"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                <path d="M12 5l-5 5 5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {/* Flecha Siguiente */}  
+            <button
+              type="button"
+              onClick={nextArticle}
+              aria-label="Siguiente artículo"
+              className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:translate-x-4"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                <path d="M8 5l5 5-5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {/* Indicadores / Dots */}
+            <div className="mt-6 flex justify-center gap-2 sm:mt-8">
+              {articles.map((article, i) => (
+                <button
+                  key={article.slug}
+                  type="button"
+                  aria-label={`Ir al artículo ${i + 1}`}
+                  onClick={() => goToArticle(i)}
+                  className={cx(
+                    "h-2 rounded-full transition-all",
+                    i === activeDot ? "w-6 bg-primary" : "w-2 bg-gray-300 hover:bg-gray-400"
+                  )}
+                />
               ))}
             </div>
           </div>
+        )}
 
-          {/* Flecha Anterior */}
-          <button
-            type="button"
-            onClick={previousArticle}
-            aria-label="Artículo anterior"
-           
-            className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:-translate-x-4"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-              <path d="M12 5l-5 5 5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          {/* Flecha Siguiente */}  
-          <button
-            type="button"
-            onClick={nextArticle}
-            aria-label="Siguiente artículo"
-            className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:translate-x-4"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-              <path d="M8 5l5 5-5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          {/* Indicadores / Dots */}
-          <div className="mt-6 flex justify-center gap-2 sm:mt-8">
-            {articles.map((article, i) => (
-              <button
-                key={article.slug}
-                type="button"
-                aria-label={`Ir al artículo ${i + 1}`}
-                onClick={() => goToArticle(i)}
-                className={cx(
-                  "h-2 rounded-full transition-all",
-                
-                  i === activeDot ? "w-6 bg-primary" : "w-2 bg-gray-300 hover:bg-gray-400"
-                )}
-              />
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

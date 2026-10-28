@@ -1,6 +1,6 @@
-#  Documentación - Observatorio CITE
+#  Documentación - Observatorio competencias digitales
 
-Una réplica del sitio "Observatorio CITE" construida con **Next.js 14 (App Router)**, **React 18**, **MongoDB** y **Tailwind CSS**.
+Una réplica del sitio "Observatorio competencias digitales" construida con **Next.js 14 (App Router)**, **React 18**, **MongoDB** y **Tailwind CSS**.
 
 ---
 
@@ -16,6 +16,7 @@ Una réplica del sitio "Observatorio CITE" construida con **Next.js 14 (App Rout
 8. [Utilidades](#utilidades)
 9. [Autenticación](#autenticación)
 10. [Sistema de Citación APA](#sistema-de-citación-apa)
+11. [Registro de Cambios](#registro-de-cambios)
 
 ---
 
@@ -33,7 +34,7 @@ Este proyecto es una plataforma web para gestionar y consultar artículos, libro
 ## Estructura del Proyecto
 
 ```
-observatorio-cite/
+Observatorio competencias digitales/
 ├── app/                          # Rutas de Next.js (App Router)
 │   ├── api/
 │   │   ├── articles/            # CRUD de artículos
@@ -55,7 +56,8 @@ observatorio-cite/
 │   ├── layout.js                # Layout raíz
 │   └── page.js                  # Página principal
 ├── components/                   # Componentes React reutilizables
-│   ├── Header.jsx               # Encabezado con navegación
+│   ├── Banner.jsx               # Encabezado: franja con logo + menú turquesa
+│   ├── Signature.jsx            # Firma del desarrollador en la consola
 │   ├── Hero.jsx                 # Sección héroe
 │   ├── Library.jsx              # Biblioteca de recursos
 │   ├── DocumentCard.jsx         # Tarjeta de documento
@@ -73,12 +75,15 @@ observatorio-cite/
 ├── lib/                          # Utilidades y configuración
 │   ├── mongodb.js               # Conexión a MongoDB (caché)
 │   ├── auth.js                  # Verificación de sesión JWT
+│   ├── articles.js              # Campos APA, slugs únicos y consulta de artículos publicados
 │   └── citations.js             # Generación de referencias APA
 ├── hooks/                        # React Hooks personalizados
 │   └── useCardsPerView.js       # Calcula columnas responsive
 ├── utils/                        # Funciones auxiliares
+│   ├── authors.js               # Separación de autores (sin dependencias)
 │   └── slugify.js               # Generador de slugs
 └── public/                       # Archivos estáticos
+    ├── logos/cite.png           # Logo institucional del banner
     └── logo_cite_letras.svg     # Logo
 ```
 
@@ -99,6 +104,7 @@ npm install
 - `jose@6.2.10` - Manejo de JWT
 - `framer-motion@13.1.0` - Animaciones
 - `tailwindcss@3.4.13` - Estilos
+- `eslint@8` + `eslint-config-next@14.2.15` - Linting (`npm run lint`)
 
 ### 2. Variables de Entorno
 
@@ -109,7 +115,7 @@ Crea un archivo `.env.local` en la raíz del proyecto:
 MONGODB_URI=mongodb+srv://usuario:contraseña@cluster.mongodb.net/observatorio_cite?retryWrites=true&w=majority
 MONGODB_DB=observatorio_cite
 
-# Autenticación JWT
+# Autenticación JWT (obligatoria: sin ella el login responde 500)
 JWT_SECRET=tu-clave-secreta-muy-larga-y-segura
 
 # Entorno
@@ -146,12 +152,12 @@ Define la estructura de artículos con campos para diferentes tipos de recursos 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `title` | String | Título del recurso (requerido) |
-| `author` | [String] | Lista de autores (requerido) |
+| `author` | [String] | Lista de autores (requerido). Ver [separación de autores](#separación-de-autores) |
 | `description` | String | Descripción breve (requerido) |
 | `content` | String | Contenido completo (requerido) |
 | `category` | String | Categoría (requerido) |
-| `slug` | String | Identificador URL amigable (requerido) |
-| `published` | Boolean | Estado de publicación (default: false) |
+| `slug` | String | Identificador URL amigable (requerido, **único**) |
+| `published` | Boolean | Estado de publicación (default: false). Con `false` el artículo es un borrador y solo lo ve el admin |
 | `typeOfComponent` | String | Tipo de recurso (enum) |
 | `dateOfPublication` | Date | Fecha de publicación (requerido) |
 | `imageUrl` | String | URL de imagen principal |
@@ -234,7 +240,7 @@ Obtiene artículos con filtros y paginación.
 | `year` | number | Filtrar por año de publicación |
 | `typeOfComponent` | string | Filtrar por tipo de recurso |
 | `page` | number | Número de página (default: 1) |
-| `limit` | number | Registros por página (default: 6) |
+| `limit` | number | Registros por página (default: 6, máximo 100; 1000 para el admin) |
 | `sort` | string | Ordenamiento: `recent`, `oldest`, `title_asc`, `title_desc` |
 
 **Ejemplo:**
@@ -263,16 +269,22 @@ GET /api/articles?q=inteligencia&category=Tecnología&year=2024&page=1&limit=10
 }
 ```
 
+Los visitantes solo reciben artículos publicados (`published` distinto de `false`); con sesión de admin también se incluyen los borradores.
+El resultado se guarda en caché 1 hora con la etiqueta `articles`, que se invalida al crear, editar o borrar un artículo.
+
 ### POST /api/articles
 
 Crear un nuevo artículo (requiere autenticación de admin).
+
+- El slug se genera a partir del título; si ya existe se agrega `-2`, `-3`, etc.
+- Si falla la validación responde `400` con el detalle; cualquier otro error responde `500` con un mensaje genérico (el detalle solo queda en el log del servidor).
 
 **Body:**
 
 ```json
 {
   "title": "Título del Artículo",
-  "author": ["García, Juan", "López, María"],
+  "author": "García, J.; López, M.",
   "description": "Descripción breve",
   "content": "Contenido completo",
   "category": "Tecnología",
@@ -281,6 +293,7 @@ Crear un nuevo artículo (requiere autenticación de admin).
   "imageUrl": "https://...",
   "journalName": "Revista Científica",
   "volume": "15",
+  "issue": "3",
   "pages": "10-25"
 }
 ```
@@ -296,13 +309,18 @@ Crear un nuevo artículo (requiere autenticación de admin).
 }
 ```
 
+### GET /api/articles/[id]
+
+Obtiene un artículo por su `_id` o por su slug. Los borradores responden `404` salvo para el admin.
+
 ### PUT/DELETE /api/articles/[id]
 
-Actualizar o eliminar un artículo específico (requiere autenticación).
+Actualizar o eliminar un artículo específico. Requiere una sesión de admin válida: el JWT de la cookie se verifica con `getAdminSession()`; sin él responden `401`.
+Al editar, el slug se conserva para no romper enlaces ya compartidos.
 
 ### GET /api/categories
 
-Obtiene todas las categorías disponibles.
+Obtiene las categorías de los artículos publicados (caché de 1 hora con la etiqueta `articles`).
 
 **Respuesta:**
 
@@ -333,7 +351,18 @@ Autentica un usuario y genera un token JWT.
 }
 ```
 
-Sets a cookie `sesion_token` with the JWT.
+Guarda el JWT en la cookie `sesion_token` (`httpOnly`, `sameSite: lax`, `secure` en producción, 24 h).
+
+**Errores:**
+
+| Código | Motivo |
+|--------|--------|
+| `400` | Faltan el correo o la contraseña, o no son texto |
+| `401` | Correo o contraseña incorrectos |
+| `429` | 5 intentos fallidos desde la misma IP en 15 minutos |
+| `500` | Falta `JWT_SECRET` o error interno |
+
+> El límite de intentos se guarda en memoria del servidor. En Vercel cada instancia lleva su propia cuenta, así que es una protección básica.
 
 ### POST /api/logout
 
@@ -343,26 +372,27 @@ Cierra la sesión del usuario (elimina la cookie).
 
 ##  Componentes React
 
-### Header.jsx
+### Banner.jsx
 
-Encabezado sticky con navegación responsive.
+Encabezado de todas las páginas: franja gris con el logo institucional (`public/logos/cite.png`) y barra turquesa con el menú. Reemplaza al antiguo `Header.jsx`.
 
 **Props:** Ninguno
 
 **Características:**
-- Menú responsive (desktop y móvil)
-- Logo del CITE
-- Enlaces de navegación
+- En pantallas `xl` (≥ 1280px) el menú es horizontal y centrado; en pantallas menores se convierte en menú hamburguesa
+- Admite submenús desplegables (hover en escritorio, clic en móvil); se cierran con clic fuera o con `Escape`
 
-**NAV_ITEMS:**
+**MENU:** para agregar o cambiar opciones edita solo esta lista. Un elemento con `sub` despliega un submenú.
 
 ```javascript
 [
-  { label: "Inicio", href: "/" },
-  { label: "Quiénes somos", href: "/quienes-somos" },
-  { label: "Informes y estadísticas", href: "/informes-estadisticas" },
-  { label: "linea del tiempo", href: "/linea-tiempo" },
-  { label: "Recursos informativos", href: "/recursos-informativos" }
+  { t: "Inicio", href: "/" },
+  { t: "Quiénes somos", href: "/quienes-somos" },
+  { t: "Informes y estadísticas", href: "/informes-estadisticas" },
+  { t: "Línea del tiempo", href: "/linea-tiempo" },
+  { t: "Recursos informativos", href: "/recursos-informativos" },
+  // Ejemplo con submenú:
+  // { t: "Conócenos", sub: [{ t: "Historia", href: "/conocenos/historia" }] },
 ]
 ```
 
@@ -438,12 +468,14 @@ Componente que renderiza los detalles completos de un artículo.
 ```
 
 **Características:**
-- Búsqueda del artículo en BD por slug
+- Búsqueda del artículo publicado por slug (`getPublishedArticleBySlug` de `lib/articles.js`)
+- Muestra la fecha de publicación (o la de alta si no tiene)
 - Genera citación APA automáticamente
 - Calcula tiempo de lectura
 - Muestra imagen principal
 - Renderiza contenido en párrafos
-- Permite volver a la biblioteca
+- Permite volver a la biblioteca (`/recursos-informativos`)
+- La página (`app/articles/[slug]/page.jsx`) genera título, descripción y Open Graph propios con `generateMetadata`
 
 **Manejo de Errores:**
 - Si el artículo no existe → muestra mensaje de error
@@ -454,6 +486,8 @@ Componente que renderiza los detalles completos de un artículo.
 ### ArticleAPA.jsx
 
 Bloque de citación APA con botones de copiar.
+
+La cita se muestra siempre como texto plano. No usar `dangerouslySetInnerHTML`: la cita contiene datos de la BD y permitiría inyectar código.
 
 **Props:**
 
@@ -480,7 +514,7 @@ Formulario para crear/editar artículos en el panel admin.
 ```
 
 **Campos:**
-- Título, autores (array)
+- Título, autores (separados por punto y coma: `Pérez, J.; López, M.`)
 - Descripción, contenido
 - Categoría, tipo de componente
 - Fecha de publicación
@@ -586,6 +620,33 @@ return (
 
 ## Utilidades
 
+### lib/articles.js
+
+| Exportación | Descripción |
+|-------------|-------------|
+| `APA_FIELDS` | Lista única de campos de citación APA |
+| `pickApaFields(body)` | Toma del body solo los campos APA, como texto limpio |
+| `createUniqueSlug(title, excludeId?)` | Slug a partir del título que no exista en la BD (`-2`, `-3`...) |
+| `getPublishedArticleBySlug(slug)` | Artículo publicado por slug; con `cache()` de React para no consultar dos veces en el mismo render |
+
+### utils/authors.js
+
+#### Separación de autores
+
+**Función: `parseAuthors(input): string[]`**
+
+Se usa al guardar (POST/PUT) y al generar la cita, para que los autores siempre se separen igual.
+
+- Separador recomendado: **punto y coma** → `"Pérez, J.; López, M."`
+- También acepta comas sin romper el formato `Apellido, N.` → `"Pérez, J., López, M."`
+- Si recibe un arreglo lo devuelve limpio
+
+```javascript
+parseAuthors("Pérez, J.; López, M.")           // → ["Pérez, J.", "López, M."]
+parseAuthors("María Rodríguez, Ana Martínez")   // → ["María Rodríguez", "Ana Martínez"]
+parseAuthors("Brito Contreras, M. G.")          // → ["Brito Contreras, M. G."]
+```
+
 ### slugify.js
 
 **Función: `createSlug(title: string): string`**
@@ -685,7 +746,8 @@ formatAuthors("Universidad Autónoma de Querétaro")
 ```
 
 **Reglas:**
-- Autores corporativos (contienen: "universidad", "instituto", etc.) se preservan
+- Autores corporativos se preservan: la palabra clave ("universidad", "instituto", "centro"...) debe ser la primera palabra o el nombre debe contener " de " (así "Juan Centro López" sigue siendo persona)
+- Si el recurso no indica editorial o institución se usa `DEFAULT_PUBLISHER` ("Observatorio de Competencias Digitales")
 - Máximo 2 autores: separa con "&"
 - 3+ autores: separa con comas y "&" antes del último
 - Convierte a formato "Apellido, Inicial."
@@ -736,6 +798,8 @@ López, M. (2023). Machine Learning fundamentals (2da ed.). Tech Publishers.
 ```
 Autor(es) (Año). Título de la tesis [Grado, Institución]. Repositorio. DOI/URL
 ```
+
+Si falta el grado se usa "Tesis"; si falta la institución se omite.
 
 Ejemplo:
 ```
@@ -793,11 +857,8 @@ npm run build
 # Iniciar en producción
 npm start
 
-# Linting
+# Linting (ESLint con next/core-web-vitals)
 npm run lint
-
-# Poblar BD (opcional)
-npm run seed
 ```
 
 ---
@@ -809,7 +870,10 @@ npm run seed
 1. **Variables de Entorno**: Nunca comitees `.env.local` con datos sensibles
 2. **JWT**: Mantén `JWT_SECRET` seguro y único por ambiente
 3. **Contraseñas**: Las contraseñas se hashean con bcryptjs antes de guardar
-4. **CORS**: Configura CORS según sea necesario en producción
+4. **Rutas protegidas**: Toda ruta que modifique datos debe validar el JWT con `getAdminSession()`; revisar solo que exista la cookie no es suficiente
+5. **Errores**: Las respuestas 500 llevan un mensaje genérico; el detalle va solo a `console.error`
+6. **HTML**: No insertar datos de la BD con `dangerouslySetInnerHTML`
+7. **CORS**: Configura CORS según sea necesario en producción
 
 ### Rendimiento
 
@@ -828,13 +892,45 @@ npm run seed
 ## Próximas Mejoras Sugeridas
 
 - [ ] Agregar pruebas unitarias (Jest)
-- [ ] Implementar upload de imágenes (Cloudinary o S3)
-- [ ] Agregar comentarios/reseñas en artículos
 - [ ] Sistema de favoritos/guardados
-- [ ] Exportar referencias en múltiples formatos (BibTeX, Chicago, etc.)
 - [ ] Búsqueda full-text indexada
 - [ ] Analytics y estadísticas de uso
 - [ ] Multi-idioma (i18n)
+- [ ] Cambiar `<img>` por `<Image />` de Next (avisos de `npm run lint`)
+- [ ] Límite de intentos de login compartido entre instancias (Redis o BD)
+
+---
+
+## Registro de Cambios
+
+### Octubre 2026
+
+**Seguridad**
+- `PUT` y `DELETE /api/articles/[id]` validan el JWT con `getAdminSession()`; antes bastaba con que existiera una cookie `sesion_token` con cualquier valor
+- La cita APA se muestra como texto; se quitó `dangerouslySetInnerHTML` de `ArticleAPA.jsx`, que permitía inyectar código
+- Login: límite de 5 intentos fallidos por IP cada 15 minutos, validación de que correo y contraseña sean texto, error claro si falta `JWT_SECRET` y cookie con `sameSite: lax`
+- `limit` en `GET /api/articles` tiene un máximo (100 público, 1000 admin)
+- Los errores 500 ya no devuelven el mensaje interno al cliente
+
+**Errores corregidos**
+- `GET /api/articles/[id]` fallaba siempre porque no importaba `unstable_cache`
+- Crear o borrar un artículo no actualizaba la lista hasta 1 hora después; ahora las cachés usan la etiqueta `articles` y se invalidan con `revalidateTag`
+- Los borradores (`published: false`) se mostraban al público
+- `slug` ahora es único y se generan slugs `-2`, `-3`... para títulos repetidos
+- El campo `issue` (número de revista) no existía en el esquema y se perdía; ahora se guarda y tiene su propio campo en el formulario
+- Los autores se separaban con coma al crear y con punto y coma al editar; ahora ambos usan `parseAuthors`
+- Citas APA: las tesis sin grado o institución mostraban `undefined`; se corrigió el nombre "Obsevatorio competenciad digitales"; un apellido como "Centro" ya no se toma como institución
+- Página de artículo: muestra la fecha de publicación, "Volver a recursos" lleva a `/recursos-informativos` y ya no falla si el artículo no tiene contenido
+
+**Interfaz y SEO**
+- Nuevo `Banner.jsx` con el logo institucional; reemplaza a `Header.jsx` en todas las páginas
+- Cada artículo tiene título, descripción y Open Graph propios (`generateMetadata`)
+
+**Mantenimiento**
+- ESLint configurado (`.eslintrc.json`); `npm run lint` funciona
+- Eliminadas dependencias sin uso (`mongodb`, `typescript`, `@types/react`, `@types/node`) y el script `seed`, cuyo archivo no existía
+- Eliminado `Header.jsx`; `Signaturee.jsx` renombrado a `Signature.jsx`
+- Campos APA centralizados en `lib/articles.js`
 
 ---
 

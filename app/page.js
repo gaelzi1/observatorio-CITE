@@ -1,12 +1,13 @@
-import Header from "@/components/Header";
+import Banner from "@/components/Banner";
 import ArticleCarousel from "@/components/ArticleCarousel";
 import Hero from "@/components/Hero";
 import Library from "@/components/Library";
+export const revalidate = 3600; // Revalidar cada hora (3600 segundos)
 export default function Page() {
     return (
         <main >
             
-            <Header />
+            <Banner />
             <Hero 
               title="Bienvenido a nuestro sitio"
               subtitle="Descubre el poder de la información"

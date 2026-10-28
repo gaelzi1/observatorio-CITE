@@ -1,6 +1,5 @@
 import Link from "next/link";
-import dbConnect from "@/lib/mongodb";
-import Article from "@/models/Article";
+import { getPublishedArticleBySlug } from "@/lib/articles";
 import { generateAPA } from "@/lib/citations";
 import ArticleAPA from "./ArticleAPA";
 import ArticleHeader from "./ArticleHeader";
@@ -9,8 +8,8 @@ export default async function ArticleDetail({slug}) {
   if (!slug) return null;
   
   try {
-    await dbConnect();
-    let article = await Article.findOne({ slug }).lean();
+    // Los borradores (published: false) no se muestran al público
+    const article = await getPublishedArticleBySlug(slug);
 
     if (!article) {
       return (
@@ -28,15 +27,17 @@ export default async function ArticleDetail({slug}) {
       );
     }
 
-    article = JSON.parse(JSON.stringify(article));
-
     const citation = generateAPA(article);
     const articleAuthor = article.author || article.autor;
-    const dateLabel = article.createdAt
-      ? new Date(article.createdAt).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })
+
+    // Fecha de publicación del recurso; si no tiene, la de alta en el sitio.
+    // timeZone UTC: la fecha se guarda a medianoche UTC y en México se mostraría un día antes.
+    const displayDate = article.dateOfPublication || article.createdAt;
+    const dateLabel = displayDate
+      ? new Date(displayDate).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })
       : "";
 
-    const bodyText = article.content?.trim() !== "" ? article.content : article.description;
+    const bodyText = (article.content?.trim() ? article.content : article.description) || "";
     const paragraphs = bodyText ? bodyText.split(/\n\s*\n/) : [];
     const readingMinutes = Math.max(1, Math.round(bodyText.trim().split(/\s+/).length / 200));
 
@@ -46,7 +47,7 @@ export default async function ArticleDetail({slug}) {
         
         <div className="mb-8 flex justify-center md:mb-10 md:justify-start">
           {/* Unificado: text-muted y hover:text-primary */}
-          <Link href="/" className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-primary">
+          <Link href="/recursos-informativos" className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-primary">
             <span aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
             Volver a recursos
           </Link>

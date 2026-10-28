@@ -1,48 +1,49 @@
-export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
+import { unstable_cache } from "next/cache";
 import dbConnect from "@/lib/mongodb";
-import { createSlug } from "@/utils/slugify";
 import { getAdminSession } from "@/lib/auth";
+import { createUniqueSlug, parseAuthors, pickApaFields } from "@/lib/articles";
+import { revalidatePath, revalidateTag } from "next/cache";
 
+export const revalidate = 3600;
 
-export async function GET(request) {  
+// Máximo de registros por página: el público pagina, el admin carga la tabla completa
+const MAX_LIMIT_PUBLIC = 100;
+const MAX_LIMIT_ADMIN = 1000;
+
+// Filtros de metadatos: búsqueda parcial (sin distinguir mayúsculas) o valor exacto
+const PARTIAL_FILTERS = ["journalName", "publisher", "degree", "institution", "conferenceName", "location", "materialType"];
+const EXACT_FILTERS = ["volume", "issue", "pages", "edition", "reportNumber", "doiOrUrl"];
+
+// Helper para crear RegExp seguro
+const makeSafeRegex = (text) => {
+  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(escaped, "i");
+};
+
+export async function GET(request) {
   try {
     await dbConnect();
 
     const { searchParams } = new URL(request.url);
+    const param = (name) => searchParams.get(name)?.trim();
 
-    const q = searchParams.get("q")?.trim();
-    const category = searchParams.get("category")?.trim();
-    const author = searchParams.get("author")?.trim();
-    const year = searchParams.get("year")?.trim();
+    // Los borradores solo los ve el administrador
+    const isAdmin = Boolean(await getAdminSession());
+
+    const q = param("q");
+    const category = param("category");
+    const author = param("author");
+    const year = param("year");
     const sort = searchParams.get("sort") || "recent";
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
-    const limit = Math.max(1, Number(searchParams.get("limit")) || 6);
-    const typeOfComponent = searchParams.get("typeOfComponent")?.trim();
+    const maxLimit = isAdmin ? MAX_LIMIT_ADMIN : MAX_LIMIT_PUBLIC;
+    const limit = Math.min(maxLimit, Math.max(1, Number(searchParams.get("limit")) || 6));
+    const typeOfComponent = param("typeOfComponent");
 
-    // Filtros adicionales para metadatos 
-    const journalName = searchParams.get("journalName")?.trim();
-    const volume = searchParams.get("volume")?.trim();
-    const issue = searchParams.get("issue")?.trim();
-    const pages = searchParams.get("pages")?.trim();
-    const publisher = searchParams.get("publisher")?.trim();
-    const edition = searchParams.get("edition")?.trim();
-    const degree = searchParams.get("degree")?.trim();
-    const institution = searchParams.get("institution")?.trim();
-    const reportNumber = searchParams.get("reportNumber")?.trim();
-    const conferenceName = searchParams.get("conferenceName")?.trim();
-    const location = searchParams.get("location")?.trim();
-    const materialType = searchParams.get("materialType")?.trim();
-    const doiOrUrl = searchParams.get("doiOrUrl")?.trim();
-
-    // Helper para crear RegExp seguro
-    const makeSafeRegex = (text) => {
-      const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      return new RegExp(escaped, "i");
-    };
-    
     const filter = {};
+    if (!isAdmin) filter.published = { $ne: false };
 
     // Filtro por tipo de componente
     if (typeOfComponent) {
@@ -82,19 +83,14 @@ export async function GET(request) {
     }
 
     // Metadatos específicos
-    if (journalName) filter.journalName = makeSafeRegex(journalName);
-    if (volume) filter.volume = volume;
-    if (issue) filter.issue = issue;
-    if (pages) filter.pages = pages;
-    if (publisher) filter.publisher = makeSafeRegex(publisher);
-    if (edition) filter.edition = edition;
-    if (degree) filter.degree = makeSafeRegex(degree);
-    if (institution) filter.institution = makeSafeRegex(institution);
-    if (reportNumber) filter.reportNumber = reportNumber;
-    if (conferenceName) filter.conferenceName = makeSafeRegex(conferenceName);
-    if (location) filter.location = makeSafeRegex(location);
-    if (materialType) filter.materialType = makeSafeRegex(materialType);
-    if (doiOrUrl) filter.doiOrUrl = doiOrUrl;
+    for (const field of PARTIAL_FILTERS) {
+      const value = param(field);
+      if (value) filter[field] = makeSafeRegex(value);
+    }
+    for (const field of EXACT_FILTERS) {
+      const value = param(field);
+      if (value) filter[field] = value;
+    }
 
     const SORT_MAP = {
       recent: { createdAt: -1 },
@@ -106,14 +102,25 @@ export async function GET(request) {
     const sortQuery = SORT_MAP[sort] || SORT_MAP.recent;
     const skip = (page - 1) * limit;
 
-    const [articles, total] = await Promise.all([
-      Article.find(filter)
-        .sort(sortQuery)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Article.countDocuments(filter),
-    ]);
+
+ // Usamos searchParams.toString() para capturar exactamente lo que el usuario
+// escribió en la URL (ej. "author=juan&page=1") y usarlo como llave única.
+const cacheKey = `articles-cache-${isAdmin ? "admin" : "public"}-${searchParams.toString()}`;
+
+    // 3. Envolver la consulta a MongoDB en unstable_cache
+    const getCachedArticles = unstable_cache(
+      async () => {
+        return await Promise.all([
+          Article.find(filter).sort(sortQuery).skip(skip).limit(limit).lean(),
+          Article.countDocuments(filter),
+        ]);
+      },
+      [cacheKey], // Si alguien más busca exactamente lo mismo, usa esta llave
+      { revalidate: 3600, tags: ["articles"] } // 1 hora, o hasta que se cree, edite o borre un artículo
+    );
+
+    // 4. Ejecutar la función en caché en lugar de consultar a Mongoose directamente
+    const [articles, total] = await getCachedArticles();
 
     return NextResponse.json({
       data: articles,
@@ -123,12 +130,8 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("Error en GET /api/articles:", error);
-
     return NextResponse.json(
-      {
-        message: "Error al obtener artículos",
-        error: error.message,
-      },
+      { message: "Error al obtener artículos" },
       { status: 500 }
     );
   }
@@ -146,7 +149,6 @@ export async function POST(request) {
 
     const {
       title,
-      author,
       description,
       content,
       category,
@@ -154,8 +156,9 @@ export async function POST(request) {
       dateOfPublication,
       typeOfComponent
     } = body;
+    const authors = parseAuthors(body.author);
 
-    if (!title || !description || !content || !category || !author || author.length === 0 || dateOfPublication === undefined || typeOfComponent === undefined) {
+    if (!title || !description || !content || !category || authors.length === 0 || dateOfPublication === undefined || typeOfComponent === undefined) {
       return NextResponse.json(
         {
           message:
@@ -164,46 +167,25 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    
-    // CORRECCIÓN 1: Le damos un nombre distinto a la variable para que no choque con la función importada
-    const generatedSlug = createSlug(body.title);
-
-    const formattedAuthors = Array.isArray(author)
-      ? author
-      : typeof author === "string" && author.trim()
-      ? author.split(",").map((a) => a.trim()).filter(Boolean)
-      : [];
 
     const article = new Article({
       title,
-      author: formattedAuthors,
-      // CORRECCIÓN 2: Usamos la variable que acabamos de crear en el paso anterior
-      slug: generatedSlug, 
+      author: authors,
+      slug: await createUniqueSlug(title),
       description,
       content,
       category,
       imageUrl: imageUrl || "",
       dateOfPublication: dateOfPublication || new Date(),
       typeOfComponent: typeOfComponent || "other",
-      
-      // Datos para citación APA
-      journalName: body.journalName || "",
-      volume: body.volume || "",
-      issue: body.issue || "",
-      pages: body.pages || "",
-      publisher: body.publisher || "",
-      edition: body.edition || "",
-      degree: body.degree || "",
-      institution: body.institution || "",
-      reportNumber: body.reportNumber || "",
-      conferenceName: body.conferenceName || "",
-      location: body.location || "",
-      materialType: body.materialType || "",
-      doiOrUrl: body.doiOrUrl || "",
+      ...pickApaFields(body), // Datos para citación APA
       published: true, // Por defecto, se marca como publicado al crear
     });
 
     const saved = await article.save();
+
+    revalidateTag("articles");
+    revalidatePath("/", "layout");
 
     return NextResponse.json(saved, {
       status: 201,
@@ -212,12 +194,13 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error al crear el artículo:", error);
 
+    // Los errores de validación de Mongoose sí son útiles para quien llena el formulario
+    if (error.name === "ValidationError") {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
     return NextResponse.json(
-      {
-        message: "Error al crear el artículo",
-        error: error.message,
-      },
-      { status: 400 }
+      { message: "Error al crear el artículo" },
+      { status: 500 }
     );
   }
 }
