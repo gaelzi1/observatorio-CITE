@@ -10,7 +10,8 @@ export default async function ArticleDetail({slug}) {
   
   try {
     await dbConnect();
-    let article = await Article.findOne({ slug }).lean();
+    // Los borradores (published: false) no se muestran al público
+    let article = await Article.findOne({ slug, published: { $ne: false } }).lean();
 
     if (!article) {
       return (

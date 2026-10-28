@@ -16,7 +16,7 @@ export async function GET() {
         return uniqueCategories.sort((a, b) => a.localeCompare(b));
       },
       ['categories-cache-global'], 
-      { revalidate: 3600 } 
+      { revalidate: 3600, tags: ["articles"] }
     );
 
     // 2. Ejecutamos la función protegida

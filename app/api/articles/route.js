@@ -4,7 +4,7 @@ import { unstable_cache } from "next/cache";
 import dbConnect from "@/lib/mongodb";
 import { createSlug } from "@/utils/slugify";
 import { getAdminSession } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export const revalidate = 3600;
 export async function GET(request) {  
@@ -44,6 +44,10 @@ export async function GET(request) {
     };
     
     const filter = {};
+
+    // Los borradores solo los ve el administrador
+    const isAdmin = Boolean(await getAdminSession());
+    if (!isAdmin) filter.published = { $ne: false };
 
     // Filtro por tipo de componente
     if (typeOfComponent) {
@@ -110,7 +114,7 @@ export async function GET(request) {
     
  // Usamos searchParams.toString() para capturar exactamente lo que el usuario 
 // escribió en la URL (ej. "author=juan&page=1") y usarlo como llave única.
-const cacheKey = `articles-cache-${searchParams.toString()}`;
+const cacheKey = `articles-cache-${isAdmin ? "admin" : "public"}-${searchParams.toString()}`;
 
     // 3. Envolver la consulta a MongoDB en unstable_cache
     const getCachedArticles = unstable_cache(
@@ -121,7 +125,7 @@ const cacheKey = `articles-cache-${searchParams.toString()}`;
         ]);
       },
       [cacheKey], // Si alguien más busca exactamente lo mismo, usa esta llave
-      { revalidate: 3600 } // Guarda este resultado específico por 1 hora
+      { revalidate: 3600, tags: ["articles"] } // 1 hora, o hasta que se cree, edite o borre un artículo
     );
 
     // 4. Ejecutar la función en caché en lugar de consultar a Mongoose directamente
@@ -212,6 +216,9 @@ export async function POST(request) {
     });
 
     const saved = await article.save();
+
+    revalidateTag("articles");
+    revalidatePath("/", "layout");
 
     return NextResponse.json(saved, {
       status: 201,

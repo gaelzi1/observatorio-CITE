@@ -41,11 +41,8 @@ export default function ArticleAPA({ citation }) {
         {/* Bloque de cita con sangría francesa y soporte para formato */}
         {/* Unificado: bg-surface y text-secondary */}
         <div className="mt-4 rounded-lg border border-gray-200 bg-surface p-4 font-serif text-[15px] leading-7 text-secondary [text-indent:-1.5rem] [padding-left:2.5rem]">
-          {typeof citation === "string" && citation.includes("<") ? (
-            <span dangerouslySetInnerHTML={{ __html: citation }} />
-          ) : (
-            citation
-          )}
+          {/* Se muestra como texto plano: nunca insertar la cita como HTML, contiene datos de la BD */}
+          {citation}
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
