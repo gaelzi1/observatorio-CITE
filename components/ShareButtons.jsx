@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 
 export default function ShareButtons({ title }) {
   const [copied, setCopied] = useState(false);
-  // 1. Iniciamos la URL vacía para evitar el error de hidratación
+  //  Iniciamos la URL vacía para evitar el error de hidratación
   const [currentUrl, setCurrentUrl] = useState("");
 
-  // 2. Llenamos la URL solo cuando ya estamos en el navegador del cliente
+  //  Llenamos la URL solo cuando ya estamos en el navegador del cliente
   useEffect(() => {
     setCurrentUrl(window.location.href);
   }, []);
 
-  // 3. Usamos currentUrl en lugar de window para construir las rutas
+  // Usamos currentUrl en lugar de window para construir las rutas
   const shareUrl = currentUrl ? encodeURIComponent(currentUrl) : "";
   const shareTitle = encodeURIComponent(title);
 
-  // 4. Si la URL aún está vacía (durante el servidor), le ponemos un "#" temporal
+  // Si la URL aún está vacía (durante el servidor), le ponemos un "#" temporal
   // Nota: Mantenemos los colores originales para las redes sociales por identidad de marca
   const shareLinks = [
     {

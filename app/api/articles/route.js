@@ -12,7 +12,6 @@ export async function GET(request) {
     await dbConnect();
 
     const { searchParams } = new URL(request.url);
-
     const q = searchParams.get("q")?.trim();
     const category = searchParams.get("category")?.trim();
     const author = searchParams.get("author")?.trim();

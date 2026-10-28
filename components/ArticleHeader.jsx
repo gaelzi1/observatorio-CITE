@@ -19,13 +19,12 @@ export default function ArticleHeader({
   dateLabel,
   readingMinutes,
 }) {
-  // Obtenemos la etiqueta en español (si no existe en el diccionario, usa el valor original)
+  
   const typeLabel = TYPE_LABELS[article.typeOfComponent] || article.typeOfComponent;
 
   return (
     <header className="mb-10 mt-6 flex flex-col items-center text-center">
       
-      {/* 2. CONTENEDOR DE ETIQUETAS (Categoría + Tipo) */}
       <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
         {article.category && (
   
@@ -34,7 +33,7 @@ export default function ArticleHeader({
           </span>
         )}
         
-        {/* Renderizado condicional seguro y nuevo diseño para el tipo de componente */}
+        
         {article.typeOfComponent && (
          
           <span className="inline-block rounded-full border border-gray-200 bg-surface px-3 py-1 text-xs font-medium uppercase tracking-wider text-muted shadow-sm">
@@ -43,7 +42,7 @@ export default function ArticleHeader({
         )}
       </div>
 
-      {/* DESCRIPCIÓN */}
+    
       {article.description && (
        
         <p className="max-w-4xl text-base leading-relaxed text-secondary sm:text-lg">
@@ -51,8 +50,7 @@ export default function ArticleHeader({
         </p>
       )}
 
-      {/* META INFO Y COMPARTIR */}
-      {/* Unificado: border-gray-200 en lugar de border-neutral-100 */}
+     
       <div className="mt-8 flex w-full flex-col items-center justify-between gap-6 border-y border-gray-200 py-5 sm:flex-row">
         
         {/* Unificado: text-secondary en lugar de text-neutral-600 */}
