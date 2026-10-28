@@ -1,5 +1,5 @@
 import ArticleDetail from "@/components/ArticleDetail";
-import Header from "@/components/Header";
+import Banner from "@/components/Banner";
 import ArticleDetailSkeleton from "@/components/ArticleDetailSkeleton";
 
 // 1. Agregamos esta línea para obligar a Next.js a renderizar esto en tiempo real
@@ -11,7 +11,7 @@ export default async function ArticlePage({ params }) {
 
   return (
     <>
-      <Header />
+      <Banner />
       <ArticleDetail slug={slug} />
     </>
   ); 
