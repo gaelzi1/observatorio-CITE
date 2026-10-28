@@ -1,11 +1,11 @@
-import Header from "@/components/Header";
+import Banner from "@/components/Banner";
 import Hero from "@/components/Hero";
 import ArticleCarousel from "@/components/ArticleCarousel";
 import Library from "@/components/Library";
 export default function ResourcesPage() {
   return (
     <main>
-      <Header />
+      <Banner />
       
       <Hero 
         title="Recursos Informativos"
