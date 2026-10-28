@@ -1,11 +1,11 @@
-import Header from '@/components/Header'
+import Banner from '@/components/Banner'
 import Image from 'next/image'
 import Link from 'next/link'
 
 export default function Page() {
     return (
         <main>
-            <Header />
+            <Banner />
             <div className="mx-auto max-w-6xl px-6 py-12">
                 <h1 className="mb-6 text-3xl font-bold">Quiénes somos</h1>
                 <p className="mb-4 text-lg leading-relaxed">

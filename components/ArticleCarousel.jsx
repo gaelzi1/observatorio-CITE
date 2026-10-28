@@ -82,23 +82,38 @@ export default function ArticleCarousel() {
   const nextArticle = useCallback(() => step(1), [step]);
   const previousArticle = useCallback(() => step(-1), [step]);
 
-  // Autoplay
-  useEffect(() => {
-    if (!isCarousel || isPaused) return;
-    const interval = setInterval(nextArticle, 5000);
-    return () => clearInterval(interval);
-  }, [isCarousel, isPaused, nextArticle]);
-
-  function handleTransitionEnd() {
+  // Lleva el índice de vuelta a una tarjeta real (sin animación) si quedó en los clones
+  // o más allá; usa módulo porque el índice puede haber avanzado varias vueltas.
+  const normalizeIndex = useCallback(() => {
     if (!isCarousel) return;
     const i = trackIndexRef.current;
-    if (i < firstRealIndex) {
-      setWithTransition(false);
-      setTrackIndex(i + articles.length);
-    } else if (i > lastRealIndex) {
-      setWithTransition(false);
-      setTrackIndex(i - articles.length);
-    }
+    if (i >= firstRealIndex && i <= lastRealIndex) return;
+    const n = articles.length;
+    setWithTransition(false);
+    setTrackIndex(firstRealIndex + ((((i - firstRealIndex) % n) + n) % n));
+  }, [isCarousel, firstRealIndex, lastRealIndex, articles.length]);
+
+  // Pestaña oculta: el navegador no ejecuta las transiciones (no llega transitionend),
+  // así que el autoplay se pausa y al volver se corrige el índice.
+  const [isHidden, setIsHidden] = useState(false);
+  useEffect(() => {
+    const onVisibility = () => {
+      setIsHidden(document.hidden);
+      if (!document.hidden) normalizeIndex();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [normalizeIndex]);
+
+  // Autoplay
+  useEffect(() => {
+    if (!isCarousel || isPaused || isHidden) return;
+    const interval = setInterval(nextArticle, 5000);
+    return () => clearInterval(interval);
+  }, [isCarousel, isPaused, isHidden, nextArticle]);
+
+  function handleTransitionEnd() {
+    normalizeIndex();
   }
 
   const goToArticle = (targetRealIndex) => {

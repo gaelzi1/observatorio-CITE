@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
-import { createSlug } from "@/utils/slugify";
-import { cookies } from "next/headers"; 
-import { revalidatePath } from "next/cache";
+import { createUniqueSlug, parseAuthors, pickApaFields } from "@/lib/articles";
+import { getAdminSession } from "@/lib/auth";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
 export async function GET(request, { params }) {
   try {
@@ -30,12 +30,13 @@ export async function GET(request, { params }) {
         }).lean();
       },
       [`article-cache-${identifier}`], // Llave única: ej. "article-cache-mi-primer-post"
-      { revalidate: 3600 } // Guarda este artículo específico en RAM por 1 hora
+      { revalidate: 3600, tags: ["articles"] } // Se invalida al crear, editar o borrar
     );
 
     const article = await getCachedArticle(identifier);
 
-    if (!article) {
+    // Los borradores solo los puede ver el administrador
+    if (!article || (article.published === false && !(await getAdminSession()))) {
       return NextResponse.json(
         { message: "Artículo no encontrado" },
         { status: 404 }
@@ -46,22 +47,20 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error("Error al obtener el artículo:", error);
     return NextResponse.json(
-      { message: "Error al obtener el artículo", error: error.message },
+      { message: "Error al obtener el artículo" },
       { status: 500 }
     );
   }
 }
 export async function PUT(request, { params }) {
-  const cokieStore =cookies();
-  const token = cokieStore.get("sesion_token")?.value;
-  if (!token){
-    return NextResponse.json({message:"no autorizado"},{status:401})
+  const adminSession = await getAdminSession();
+  if (!adminSession) {
+    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
   try {
     await dbConnect();
-    
+
     const resolvedParams = await Promise.resolve(params);
-     console.log("Resolved Params:", resolvedParams); // Depuración
     const id = resolvedParams.slug || resolvedParams.id; // Intentamos obtener el slug o el id
 
    
@@ -77,22 +76,14 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ message: "Artículo no encontrado" }, { status: 404 });
     }
 
-    
-    const finalSlug = existingArticle.slug || createSlug(body.title);
-
-    const formattedAuthors = Array.isArray(body.author)
-      ? body.author
-      : typeof body.author === "string" && body.author.trim()
-      ? body.author.includes(";")
-        ? body.author.split(";").map((a) => a.trim()).filter(Boolean)
-        : [body.author.trim()]
-      : [];
+    // El slug no cambia al editar para no romper enlaces ya compartidos
+    const finalSlug = existingArticle.slug || (await createUniqueSlug(body.title, id));
 
     const updatedArticle = await Article.findByIdAndUpdate(
       id,
       {
         title: body.title,
-        author: formattedAuthors,
+        author: parseAuthors(body.author),
         slug: finalSlug,
         description: body.description,
         content: body.content,
@@ -101,42 +92,33 @@ export async function PUT(request, { params }) {
         dateOfPublication: body.dateOfPublication,
         published: body.published,
         typeOfComponent: body.typeOfComponent || "other",
-        journalName: body.journalName || "",
-        volume: body.volume || "",
-        issue: body.issue || "",
-        pages: body.pages || "",
-        publisher: body.publisher || "",
-        edition: body.edition || "",
-        degree: body.degree || "",
-        institution: body.institution || "",
-        reportNumber: body.reportNumber || "",
-        conferenceName: body.conferenceName || "",
-        location: body.location || "",
-        materialType: body.materialType || "",
-        doiOrUrl: body.doiOrUrl || "",
+        ...pickApaFields(body),
       },
       {
         returnDocument: "after",  
         runValidators: true,
       }
     );
-    revalidatePath("/", "layout");  
+    revalidateTag("articles");
+    revalidatePath("/", "layout");
 
     return NextResponse.json(updatedArticle, { status: 200 });
   } catch (error) {
     console.error("Error en PUT /api/articles/[id]:", error);
+    if (error.name === "ValidationError" || error.name === "CastError") {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
     return NextResponse.json(
-      { message: "Error al actualizar el artículo", error: error.message },
+      { message: "Error al actualizar el artículo" },
       { status: 500 }
     );
   }
 }
 
 export async function DELETE(request, { params }) {
-   const cokieStore =cookies();
-  const token = cokieStore.get("sesion_token")?.value;
-  if (!token){
-    return NextResponse.json({message:"no autorizado"},{status:401})
+  const adminSession = await getAdminSession();
+  if (!adminSession) {
+    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
   try {
    
@@ -154,6 +136,9 @@ export async function DELETE(request, { params }) {
         { status: 404 }
       );
     }
+
+    revalidateTag("articles");
+    revalidatePath("/", "layout");
 
     // 5. ¡Éxito! Regresamos un JSON válido para que tu frontend sea feliz
     return NextResponse.json(

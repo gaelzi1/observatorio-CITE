@@ -1,9 +1,9 @@
 import Timeline from "@/components/Timeline";
-import Header from "@/components/Header"
+import Banner from "@/components/Banner"
 export default async function pruebas(){
 return(
   <>
-  <Header/>
+  <Banner/>
    <Timeline/>
    </>
 

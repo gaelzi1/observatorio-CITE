@@ -1,5 +1,5 @@
 import "./globals.css";
-import Signature from "@/components/Signaturee";
+import Signature from "@/components/Signature";
 
 export const metadata = {
   title: "Observatorio CITE",

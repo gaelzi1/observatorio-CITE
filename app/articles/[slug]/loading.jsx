@@ -1,8 +1,8 @@
 import ArticleDetailSkeleton from "@/components/ArticleDetailSkeleton"
-import Header from "@/components/Header";
+import Banner from "@/components/Banner";
 export default async function loading (){
     return(
-        <><Header />
+        <><Banner />
         <div className="space-y-6"><ArticleDetailSkeleton /></div>
         </>
     )
