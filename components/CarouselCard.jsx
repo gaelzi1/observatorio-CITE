@@ -39,12 +39,11 @@ export default function CarouselCard({ article }) {
 
       {/* 3. METADATOS Y TÍTULO */}
       <div className="relative z-10 mt-auto flex flex-col p-5 sm:p-6">
-        {/* Unificado: text-muted en lugar de text-gray-800 para los metadatos */}
+
         <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted">
           {tipo} <span className="mx-1 text-gray-400">|</span> {categoria}
         </p>
 
-        {/* Unificado: text-primary en lugar de text-black para darle peso al título con el color de la marca */}
         <h3 className="line-clamp-3 text-lg font-medium leading-snug text-primary sm:text-xl">
           {article.title}
         </h3>

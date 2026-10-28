@@ -3,18 +3,37 @@ import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
 import { createSlug } from "@/utils/slugify";
 import { cookies } from "next/headers"; 
+import { revalidatePath } from "next/cache";
+
 export async function GET(request, { params }) {
   try {
     await dbConnect();
 
-    // 1. Obtenemos los parámetros (funciona se llame [id] o [slug] tu carpeta)
     const resolvedParams = await Promise.resolve(params);
-    const slug = resolvedParams.slug;
+    const identifier = resolvedParams.slug || resolvedParams.id;
 
-    console.log("Backend buscando en BD el slug:", slug);
-    const identifier = resolvedParams.slug || resolvedParams.id
-    console.log("1. Frontend intentando buscar este slug:", slug);
-    const article = await Article.findOne({ slug: identifier });
+    if (!identifier) {
+      return NextResponse.json({ message: "Identificador no proporcionado" }, { status: 400 });
+    }
+
+    // Creamos una función en caché única para este identificador específico
+    const getCachedArticle = unstable_cache(
+      async (idToFind) => {
+        // Usamos $or para que funcione sin importar si el frontend mandó el Slug o el _id de MongoDB
+        // .lean() convierte el documento de Mongoose a JSON puro, acelerando la respuesta
+        return await Article.findOne({
+          $or: [
+            { slug: idToFind },
+            // Solo buscamos por _id si el identificador tiene 24 caracteres (formato válido de ObjectId)
+            ...(idToFind.length === 24 ? [{ _id: idToFind }] : [])
+          ]
+        }).lean();
+      },
+      [`article-cache-${identifier}`], // Llave única: ej. "article-cache-mi-primer-post"
+      { revalidate: 3600 } // Guarda este artículo específico en RAM por 1 hora
+    );
+
+    const article = await getCachedArticle(identifier);
 
     if (!article) {
       return NextResponse.json(
@@ -25,18 +44,13 @@ export async function GET(request, { params }) {
 
     return NextResponse.json(article);
   } catch (error) {
-    console.error("Error:", error);
-
+    console.error("Error al obtener el artículo:", error);
     return NextResponse.json(
-      {
-        message: "Error al obtener el artículo",
-        error: error.message,
-      },
+      { message: "Error al obtener el artículo", error: error.message },
       { status: 500 }
     );
   }
 }
-
 export async function PUT(request, { params }) {
   const cokieStore =cookies();
   const token = cokieStore.get("sesion_token")?.value;
@@ -102,10 +116,11 @@ export async function PUT(request, { params }) {
         doiOrUrl: body.doiOrUrl || "",
       },
       {
-        new: true,
+        returnDocument: "after",  
         runValidators: true,
       }
     );
+    revalidatePath("/", "layout");  
 
     return NextResponse.json(updatedArticle, { status: 200 });
   } catch (error) {

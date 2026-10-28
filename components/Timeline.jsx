@@ -68,10 +68,10 @@ export default function InstitutionalTimeline() {
         {/* TIMELINE CONTAINER */}
         <div className="relative mx-auto max-w-4xl" ref={timelineRef}>
           
-          {/* LÍNEA GRIS DE FONDO */}
+          
           <div className="absolute bottom-0 left-[24px] top-0 w-px -translate-x-1/2 bg-gray-200 md:left-1/2" />
           
-          {/* LÍNEA DE PROGRESO */}
+       
           <div 
             className="absolute left-[24px] top-0 w-px -translate-x-1/2 bg-primary transition-all duration-300 ease-out md:left-1/2"
             style={{ height: `${scrollProgress}%` }}
@@ -93,7 +93,7 @@ export default function InstitutionalTimeline() {
                   <div className={`h-1.5 w-1.5 bg-accent transition-opacity duration-300 ${isFilled ? 'opacity-100' : 'opacity-0'}`} />
                 </div>
 
-                {/* CAJA DE CONTENIDO */}
+               
                 <div 
                   className={`w-full rounded-xl pl-[56px] md:w-1/2 md:pl-0 ${
                     isEven ? "md:pr-14" : "md:ml-auto md:pl-14"

@@ -45,15 +45,14 @@ export default async function ArticleDetail({slug}) {
         
         
         <div className="mb-8 flex justify-center md:mb-10 md:justify-start">
-          {/* Unificado: text-muted y hover:text-primary */}
+          
           <Link href="/" className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-primary">
             <span aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
             Volver a recursos
           </Link>
         </div>
 
-        {/* TÍTULO */}
-        {/* Unificado: text-primary en lugar de text-cite-teal-dark */}
+        
         <h1 className="mx-auto max-w-4xl text-center text-3xl font-extrabold tracking-tight text-primary sm:text-4xl lg:text-5xl lg:leading-[1.15]">
           {article.title}
         </h1>
@@ -75,7 +74,6 @@ export default async function ArticleDetail({slug}) {
         )}
 
         {/* CUERPO DEL ARTÍCULO */}
-        {/* Unificado: prose-p:text-secondary en lugar de prose-p:text-neutral-700 */}
         <article className="prose prose-neutral mx-auto max-w-none prose-p:text-lg prose-p:leading-8 prose-p:text-secondary">
           {paragraphs.map((paragraph, index) => (
             <p key={index} className="mb-6">{paragraph}</p>

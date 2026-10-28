@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import ArticleCarousel from "@/components/ArticleCarousel";
 import Hero from "@/components/Hero";
 import Library from "@/components/Library";
+export const revalidate = 3600; // Revalidar cada hora (3600 segundos)
 export default function Page() {
     return (
         <main >
