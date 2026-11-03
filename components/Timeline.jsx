@@ -7,7 +7,9 @@ import { useRef, useState, useEffect } from "react";
 export default function InstitutionalTimeline() {
   const timelineRef = useRef(null);
   const [timelineData, setTimelineData] = useState([]);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const nodeRefs = useRef([]);
+  const [lineHeight, setLineHeight] = useState(0); // px que mide la línea de progreso
+  const [filledCount, setFilledCount] = useState(0); // puntos que la línea ya alcanzó
 
   useEffect(() => {
     async function fetchTimelineData() {
@@ -23,33 +25,53 @@ export default function InstitutionalTimeline() {
     fetchTimelineData();
   }, []);
 
+  // La línea crece hasta un "punto de lectura" en la pantalla y cada punto se marca
+  // justo cuando la punta de la línea llega a su centro (posición real, no por índice).
+  // Se engancha cuando ya hay datos: antes el contenedor mide 0px.
   useEffect(() => {
-    const handleScroll = () => {
-      if (!timelineRef.current) return;
-      
-      const { top, height } = timelineRef.current.getBoundingClientRect();
+    if (timelineData.length === 0) return;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const container = timelineRef.current;
+      if (!container) return;
+
+      const { top, height } = container.getBoundingClientRect();
       const windowHeight = window.innerHeight;
-      
-      const startFilling = windowHeight / 2;
-      const scrolled = startFilling - top;
-      
-      let progress = (scrolled / height) * 100;
 
-      const maxScroll = document.documentElement.scrollHeight - windowHeight;
-      const isAtBottom = Math.ceil(window.scrollY) >= maxScroll - 50; 
-      
-      if (isAtBottom) {
-        progress = 100;
+      // El punto de lectura está a media pantalla; al acercarse al final de la página
+      // baja suavemente hasta el borde inferior para que la línea termine de llenarse.
+      const remaining = document.documentElement.scrollHeight - windowHeight - window.scrollY;
+      const anchor = windowHeight / 2 + Math.max(0, windowHeight / 2 - Math.max(0, remaining));
+
+      const reached = Math.max(0, Math.min(height, anchor - top));
+      setLineHeight(reached);
+
+      let count = 0;
+      for (const node of nodeRefs.current) {
+        if (!node) continue;
+        const rect = node.getBoundingClientRect();
+        if (reached >= rect.top + rect.height / 2 - top) count++;
       }
-
-      setScrollProgress(Math.max(0, Math.min(100, progress)));
+      setFilledCount(count);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    setTimeout(handleScroll, 50);
+    // Un cálculo por cuadro como máximo
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
 
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [timelineData]);
 
   return (
     <section className="overflow-hidden py-12 md:py-8">
@@ -73,13 +95,13 @@ export default function InstitutionalTimeline() {
           
           {/* LÍNEA DE PROGRESO */}
           <div 
-            className="absolute left-[24px] top-0 w-px -translate-x-1/2 bg-primary transition-all duration-300 ease-out md:left-1/2"
-            style={{ height: `${scrollProgress}%` }}
+            className="absolute left-[24px] top-0 w-px -translate-x-1/2 bg-primary md:left-1/2"
+            style={{ height: `${lineHeight}px` }}
           />
 
           {timelineData.map((item, index) => {
             const isEven = index % 2 === 0;
-            const isFilled = scrollProgress > (index / timelineData.length) * 100;
+            const isFilled = index < filledCount;
             const isLast = index === timelineData.length - 1;
 
             return (
@@ -89,8 +111,17 @@ export default function InstitutionalTimeline() {
               >
                 
                 {/* NODO CENTRAL */}
-                <div className="absolute left-[24px] z-10 flex h-3 w-3 -translate-x-1/2 items-center justify-center border border-focus bg-surface md:left-1/2">
-                  <div className={`h-1.5 w-1.5 bg-accent transition-opacity duration-300 ${isFilled ? 'opacity-100' : 'opacity-0'}`} />
+                <div
+                  ref={(el) => (nodeRefs.current[index] = el)}
+                  className={`absolute left-[24px] z-10 flex h-3 w-3 -translate-x-1/2 items-center justify-center border bg-surface transition-colors duration-200 md:left-1/2 ${
+                    isFilled ? "border-primary" : "border-focus"
+                  }`}
+                >
+                  <div
+                    className={`h-1.5 w-1.5 bg-accent transition-all duration-200 ease-out ${
+                      isFilled ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                    }`}
+                  />
                 </div>
 
                 {/* CAJA DE CONTENIDO */}
