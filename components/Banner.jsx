@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 /* ---------------------------------------------------------------
    Menú del banner. Para agregar o cambiar opciones edite solo esta lista.
@@ -46,6 +47,7 @@ export default function Banner() {
   const [abierto, setAbierto] = useState(null); // índice del submenú abierto
   const [movil, setMovil] = useState(false); // menú hamburguesa abierto
   const escritorio = useEscritorio();
+  const ruta = usePathname();
   const ref = useRef(null);
 
   // Cerrar con clic fuera o con Escape
@@ -66,7 +68,7 @@ export default function Banner() {
     <header ref={ref} className="w-full">
       {/* Franja gris con el logo */}
       <div style={{ backgroundColor: GRIS }}>
-        <div className="flex w-full items-center px-6 py-4 xl:px-16">
+        <div className="flex w-full items-center px-2 py-2 xl:px-[40px] xl:py-5">
           <Link href="/">
             <Image
               src="/logos/cite.png"
@@ -74,15 +76,14 @@ export default function Banner() {
               width={792}
               height={90}
               priority
-              className="h-auto w-full"
+              className="h-[70px] w-full max-w-[600px]"
             />
           </Link>
         </div>
       </div>
 
       {/* Barra turquesa */}
-      <nav className="bg-cite-turquesa" aria-label="Principal">
-        <div className="w-full px-6 xl:px-16">
+      <nav className="bg-cite-turquesa" aria-label="Principal">   <div className="w-full px-6 xl:px-[50px]">
           {/* Botón hamburguesa (solo en pantallas menores a xl) */}
           <button
             onClick={() => setMovil(!movil)}
@@ -95,12 +96,14 @@ export default function Banner() {
             </svg>
           </button>
 
-          <ul className={`${movil ? "flex" : "hidden"} flex-col xl:flex xl:flex-row xl:justify-center`}>
+          <ul className={`${movil ? "flex" : "hidden"} flex-col xl:flex xl:flex-row xl:flex-wrap`}>
             {MENU.map((item, i) => {
               const esAbierto = abierto === i;
               const alinearDerecha = i === MENU.length - 1; // evita que el último panel se salga de la pantalla
-              const estilo = `flex w-full items-center gap-2 px-[18px] py-2.5 text-left text-[15px] font-medium uppercase tracking-tight transition-colors xl:h-[50px] xl:w-auto xl:py-0 ${
-                esAbierto ? "bg-white text-slate-700" : "text-white hover:bg-white/15"
+              // La página actual se marca en blanco, como "Inicio" en la referencia
+              const activo = item.href && (item.href === "/" ? ruta === "/" : ruta?.startsWith(item.href));
+              const estilo = `flex w-full items-center gap-2 px-[18px] py-2.5 text-left text-[15px] uppercase tracking-tight transition-colors xl:h-[70px] xl:w-auto xl:py-0 ${
+                esAbierto || activo ? "bg-white text-slate-600" : "text-white hover:bg-white/15"
               }`;
 
               return (
@@ -116,7 +119,7 @@ export default function Banner() {
                       <Chevron abierto={esAbierto} />
                     </button>
                   ) : (
-                    <Link href={item.href} className={estilo} onClick={() => setMovil(false)}>{item.t}</Link>
+                    <Link href={item.href} className={estilo} aria-current={activo ? "page" : undefined} onClick={() => setMovil(false)}>{item.t}</Link>
                   )}
 
                   {item.sub && esAbierto && (
