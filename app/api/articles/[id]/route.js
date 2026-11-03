@@ -90,7 +90,6 @@ export async function PUT(request, { params }) {
         category: body.category,
         imageUrl: body.imageUrl || "",
         dateOfPublication: body.dateOfPublication,
-        published: body.published,
         typeOfComponent: body.typeOfComponent || "other",
         ...pickApaFields(body),
       },

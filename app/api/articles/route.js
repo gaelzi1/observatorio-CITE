@@ -179,7 +179,7 @@ export async function POST(request) {
       dateOfPublication: dateOfPublication || new Date(),
       typeOfComponent: typeOfComponent || "other",
       ...pickApaFields(body), // Datos para citación APA
-      published: true, // Por defecto, se marca como publicado al crear
+      published: true, // Todos los recursos se publican al crearse
     });
 
     const saved = await article.save();
