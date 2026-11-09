@@ -1,10 +1,28 @@
+// =============================================================================
+// ArticleCarousel — Carrusel infinito de artículos recientes
+// -----------------------------------------------------------------------------
+// Client Component: pide los datos desde el navegador (fetch dentro de
+// useEffect), avanza solo cada 5 s, responde a flechas, puntos y swipe táctil.
+//
+// TRUCO DEL CARRUSEL INFINITO ("clones"):
+// Si hay artículos [A B C D E] y se ven 3 a la vez, la "pista" (track) es:
+//      [C D E] + [A B C D E] + [A B C]
+//       clones     reales      clones
+// Al pasar de E hacia adelante se ve el clon de A con animación; cuando la
+// animación termina, saltamos SIN animación a la A real. El usuario no nota el
+// salto y parece que el carrusel no tiene fin.
+// =============================================================================
+
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCardsPerView } from "@/hooks/useCardsPerView";
 import CarouselCard from "./CarouselCard";
 import CarouselCardSkeleton from "./CarouselCardSkeleton";
 
+// Une clases CSS ignorando las falsas: cx("a", false && "b", "c") → "a c".
+// `...args` (parámetro rest) recoge todos los argumentos en un arreglo.
 function cx(...args) {
   return args.filter(Boolean).join(" ");
 }
@@ -14,13 +32,22 @@ export default function ArticleCarousel() {
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
+  // Tarjetas visibles a la vez (1, 2 o 3 según el ancho de pantalla).
   const cardsPerView = useCardsPerView();
+  // Posición actual dentro de la pista (incluyendo clones). Empieza en el
+  // primer artículo real, que está justo después de los clones iniciales.
   const [trackIndex, setTrackIndex] = useState(cardsPerView);
+  // Si es false, el movimiento es instantáneo (para el salto invisible).
   const [withTransition, setWithTransition] = useState(true);
+  // useRef guarda un valor que NO provoca re-render al cambiar. Aquí copiamos
+  // trackIndex para leer siempre el valor más reciente dentro de los eventos.
   const trackIndexRef = useRef(trackIndex);
   trackIndexRef.current = trackIndex;
 
   // Carga de artículos
+  // Patrón típico para pedir datos en un Client Component: useEffect con []
+  // (se ejecuta una vez al montar). La función async se declara DENTRO porque
+  // el callback de useEffect no puede ser async directamente.
   useEffect(() => {
     async function loadArticles() {
       try {
@@ -30,6 +57,7 @@ export default function ArticleCarousel() {
         const data = await res.json();
         const rawArticles = data.data || [];
 
+        // Publicados, del más nuevo al más viejo, máximo 8.
         const publishedArticles = rawArticles
           .filter((article) => article.published !== false)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -46,8 +74,11 @@ export default function ArticleCarousel() {
     loadArticles();
   }, []);
 
+  // Sólo hay carrusel si hay más artículos de los que caben; si no, se muestra una rejilla.
   const isCarousel = articles.length > cardsPerView;
 
+  // Pista con clones al inicio y al final (ver explicación arriba).
+  // slice(-n) toma los últimos n elementos; slice(0, n) los primeros n.
   const track = useMemo(() => {
     if (!isCarousel) return articles;
     const head = articles.slice(-cardsPerView);
@@ -58,18 +89,24 @@ export default function ArticleCarousel() {
   const firstRealIndex = cardsPerView;
   const lastRealIndex = cardsPerView + articles.length - 1;
 
+  // Si cambia el tamaño de pantalla o la cantidad de artículos, volvemos al
+  // primer artículo real sin animación (la pista cambió de forma).
   useEffect(() => {
     if (!isCarousel) return;
     setWithTransition(false);
     setTrackIndex(firstRealIndex);
   }, [isCarousel, cardsPerView, articles.length]);
 
+  // Después de un salto sin animación, reactivamos la transición en el
+  // siguiente cuadro (requestAnimationFrame) para que el navegador alcance a
+  // pintar primero la posición nueva.
   useEffect(() => {
     if (withTransition) return;
     const id = requestAnimationFrame(() => setWithTransition(true));
     return () => cancelAnimationFrame(id);
   }, [withTransition, trackIndex]);
 
+  // Avanza (+1) o retrocede (-1) una tarjeta con animación.
   const step = useCallback(
     (direction) => {
       if (!isCarousel) return;
@@ -82,38 +119,27 @@ export default function ArticleCarousel() {
   const nextArticle = useCallback(() => step(1), [step]);
   const previousArticle = useCallback(() => step(-1), [step]);
 
-  // Lleva el índice de vuelta a una tarjeta real (sin animación) si quedó en los clones
-  // o más allá; usa módulo porque el índice puede haber avanzado varias vueltas.
-  const normalizeIndex = useCallback(() => {
-    if (!isCarousel) return;
-    const i = trackIndexRef.current;
-    if (i >= firstRealIndex && i <= lastRealIndex) return;
-    const n = articles.length;
-    setWithTransition(false);
-    setTrackIndex(firstRealIndex + ((((i - firstRealIndex) % n) + n) % n));
-  }, [isCarousel, firstRealIndex, lastRealIndex, articles.length]);
-
-  // Pestaña oculta: el navegador no ejecuta las transiciones (no llega transitionend),
-  // así que el autoplay se pausa y al volver se corrige el índice.
-  const [isHidden, setIsHidden] = useState(false);
-  useEffect(() => {
-    const onVisibility = () => {
-      setIsHidden(document.hidden);
-      if (!document.hidden) normalizeIndex();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [normalizeIndex]);
-
   // Autoplay
+  // setInterval llama a nextArticle cada 5 s; clearInterval lo detiene al
+  // pausar (hover/touch) o al desmontar el componente.
   useEffect(() => {
-    if (!isCarousel || isPaused || isHidden) return;
+    if (!isCarousel || isPaused) return;
     const interval = setInterval(nextArticle, 5000);
     return () => clearInterval(interval);
-  }, [isCarousel, isPaused, isHidden, nextArticle]);
+  }, [isCarousel, isPaused, nextArticle]);
 
+  // Se ejecuta al terminar la animación CSS. Si quedamos sobre un clon,
+  // saltamos sin animación a la tarjeta real equivalente (el "truco" infinito).
   function handleTransitionEnd() {
-    normalizeIndex();
+    if (!isCarousel) return;
+    const i = trackIndexRef.current;
+    if (i < firstRealIndex) {
+      setWithTransition(false);
+      setTrackIndex(i + articles.length);
+    } else if (i > lastRealIndex) {
+      setWithTransition(false);
+      setTrackIndex(i - articles.length);
+    }
   }
 
   const goToArticle = (targetRealIndex) => {
@@ -123,6 +149,8 @@ export default function ArticleCarousel() {
   };
 
   // Swipe táctil
+  // Usamos useRef (no useState) porque estos valores cambian con cada
+  // movimiento del dedo y no necesitan volver a pintar el componente.
   const touchStartX = useRef(null);
   const touchDeltaX = useRef(0);
 
@@ -151,6 +179,8 @@ export default function ArticleCarousel() {
     setIsPaused(false);
   }
 
+  // Qué punto (dot) resaltar. El doble % con + length es un "módulo positivo":
+  // en JS, -1 % 5 da -1, y así lo convertimos en 4.
   const activeDot = isCarousel
     ? (((trackIndex - firstRealIndex) % articles.length) + articles.length) % articles.length
     : 0;
@@ -168,6 +198,7 @@ export default function ArticleCarousel() {
 
         {/* 1. ESTADO DE CARGA */}
        {/* 1. ESTADO DE CARGA */}
+        {/* Ternarios encadenados: cargando ? ... : vacío ? ... : rejilla ? ... : carrusel */}
         {loading ? (
           <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {/* 1er Skeleton: Siempre visible (Móvil, Tablet, PC) */}
@@ -223,11 +254,14 @@ export default function ArticleCarousel() {
                   "flex -mx-1 sm:-mx-2 md:-mx-3",
                   withTransition && "transition-transform duration-500 ease-in-out motion-reduce:transition-none"
                 )}
+                // style recibe un objeto JS (por eso las dobles llaves). Mover
+                // la pista con translateX es lo que produce el deslizamiento.
                 style={{ transform: `translateX(-${trackIndex * (100 / cardsPerView)}%)` }}
                 onTransitionEnd={handleTransitionEnd}
               >
                 {track.map((article, i) => (
                   <div
+                    // Los clones repiten _id, así que añadimos el índice para que la key sea única.
                     key={`${article._id}-${i}`}
                     className="flex-shrink-0 px-1 sm:px-2 md:px-3"
                     style={{ width: slideWidth }}
@@ -245,9 +279,7 @@ export default function ArticleCarousel() {
               aria-label="Artículo anterior"
               className="absolute left-0 top-1/2 z-10 hidden -translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:-translate-x-4"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-                <path d="M12 5l-5 5 5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
             </button>
 
             {/* Flecha Siguiente */}  
@@ -257,9 +289,7 @@ export default function ArticleCarousel() {
               aria-label="Siguiente artículo"
               className="absolute right-0 top-1/2 z-10 hidden translate-x-2 -translate-y-1/2 rounded-full border border-gray-200 bg-surface/90 p-2 text-primary shadow-sm backdrop-blur transition hover:border-focus hover:bg-surface sm:flex sm:p-2.5 md:translate-x-4"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-                <path d="M8 5l5 5-5 5" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ChevronRight className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
             </button>
 
             {/* Indicadores / Dots */}

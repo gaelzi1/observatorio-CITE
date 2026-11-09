@@ -1,3 +1,6 @@
+// Silueta de carga de un elemento de la biblioteca (imita a DocumentCard).
+// Ojo: aquí el componente se declara como "función flecha" y se exporta al
+// final; es equivalente a `export default function ArticleSkeleton() {...}`.
 const ArticleSkeleton = () => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 w-full animate-pulse mb-8">

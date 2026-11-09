@@ -2,6 +2,10 @@ import Banner from '@/components/Banner'
 import Image from 'next/image'
 import Link from 'next/link'
 
+// Página estática en /informes-estadisticas (el nombre de la carpeta es la URL).
+// Nota: Image y Link se importan pero aún no se usan; se pueden quitar o usar
+// cuando se agregue contenido.
+// En JSX se usa `className` en lugar de `class` (class es palabra reservada en JS).
 export default function Page() {
     return (
         <main>

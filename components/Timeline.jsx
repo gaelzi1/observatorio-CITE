@@ -4,11 +4,24 @@ import { useRef, useState, useEffect } from "react";
 
 
 
+// =============================================================================
+// Timeline — Línea de tiempo institucional con progreso al hacer scroll
+// -----------------------------------------------------------------------------
+// 1. Pide los eventos a /api/timeline.
+// 2. Al hacer scroll, una línea de color crece y va "encendiendo" cada punto
+//    (nodo) cuando la punta de la línea pasa por su centro.
+// Client Component: necesita fetch en el navegador, eventos de scroll y
+// medir posiciones reales de los elementos en pantalla.
+// =============================================================================
 export default function InstitutionalTimeline() {
+  // Referencia al contenedor para medir su posición y altura.
   const timelineRef = useRef(null);
   const [timelineData, setTimelineData] = useState([]);
+  // Un arreglo de referencias: una por cada nodo (punto) de la línea.
   const nodeRefs = useRef([]);
-  const [lineHeight, setLineHeight] = useState(0); // px que mide la línea de progreso
+  // La línea de progreso se mueve escribiendo su estilo directamente (sin
+  // estado de React) para no volver a pintar toda la lista en cada cuadro.
+  const lineRef = useRef(null);
   const [filledCount, setFilledCount] = useState(0); // puntos que la línea ya alcanzó
 
   useEffect(() => {
@@ -25,49 +38,112 @@ export default function InstitutionalTimeline() {
     fetchTimelineData();
   }, []);
 
-  // La línea crece hasta un "punto de lectura" en la pantalla y cada punto se marca
-  // justo cuando la punta de la línea llega a su centro (posición real, no por índice).
-  // Se engancha cuando ya hay datos: antes el contenedor mide 0px.
+  // La línea avanza con el scroll y cada punto se marca justo cuando la punta
+  // de la línea llega a su centro. Se engancha cuando ya hay datos: antes el
+  // contenedor mide 0px.
+  //
+  // Cómo se calcula (sin cambios bruscos de velocidad):
+  //   - start: scroll en el que el inicio de la línea toca la mitad de la pantalla.
+  //   - end:   scroll en el que el final la toca, o el final de la página si
+  //            antes se acaba el scroll.
+  //   - progreso = (scroll - start) / (end - start), siempre lineal.
+  // Así la punta va pegada a la mitad de la pantalla y, si la página es corta,
+  // la línea avanza un poco más rápido pero PAREJO de principio a fin.
+  // Además, la punta "persigue" su objetivo con una suavización para que los
+  // saltos de la rueda del mouse no se vean a tirones.
   useEffect(() => {
     if (timelineData.length === 0) return;
+    const container = timelineRef.current;
+    const line = lineRef.current;
+    if (!container || !line) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const SMOOTHING_MS = 90; // menor = sigue al scroll más pegado
 
     let frame = 0;
-    const update = () => {
-      frame = 0;
-      const container = timelineRef.current;
-      if (!container) return;
+    let lastTime = 0;
+    let shown = null; // px que mide la línea ahora mismo (null = primer cálculo)
+    let lastCount = -1;
+    let nodeCenters = []; // centro de cada punto, en px desde el inicio de la línea
 
+    // Las posiciones de los puntos no dependen del scroll: sólo se miden al
+    // inicio y cuando cambia el tamaño del contenedor.
+    const measureNodes = () => {
+      const boxTop = container.getBoundingClientRect().top;
+      nodeCenters = nodeRefs.current
+        .filter(Boolean)
+        .map((node) => {
+          const rect = node.getBoundingClientRect();
+          return rect.top + rect.height / 2 - boxTop;
+        });
+    };
+
+    // Altura que DEBERÍA tener la línea según el scroll actual.
+    const getTarget = () => {
       const { top, height } = container.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
+      const vh = window.innerHeight;
+      const scrollY = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - vh;
+      const lineTop = top + scrollY; // posición absoluta en la página
 
-      // El punto de lectura está a media pantalla; al acercarse al final de la página
-      // baja suavemente hasta el borde inferior para que la línea termine de llenarse.
-      const remaining = document.documentElement.scrollHeight - windowHeight - window.scrollY;
-      const anchor = windowHeight / 2 + Math.max(0, windowHeight / 2 - Math.max(0, remaining));
+      const start = lineTop - vh / 2;
+      const end = Math.min(lineTop + height - vh / 2, maxScroll);
+      const progress = end > start ? (scrollY - start) / (end - start) : 1;
+      return { target: Math.max(0, Math.min(1, progress)) * height, height };
+    };
 
-      const reached = Math.max(0, Math.min(height, anchor - top));
-      setLineHeight(reached);
+    const tick = (time) => {
+      frame = 0;
+      const { target, height } = getTarget();
 
-      let count = 0;
-      for (const node of nodeRefs.current) {
-        if (!node) continue;
-        const rect = node.getBoundingClientRect();
-        if (reached >= rect.top + rect.height / 2 - top) count++;
+      if (shown === null || reduceMotion) {
+        shown = target;
+      } else {
+        // Suavizado basado en el tiempo (igual en pantallas de 60 o 120 Hz).
+        const dt = lastTime ? Math.min(64, time - lastTime) : 16;
+        shown += (target - shown) * (1 - Math.exp(-dt / SMOOTHING_MS));
+        if (Math.abs(target - shown) < 0.5) shown = target;
       }
-      setFilledCount(count);
+      lastTime = time;
+
+      // scaleY es más barato para el navegador que cambiar `height`.
+      line.style.transform = `translateX(-50%) scaleY(${height ? shown / height : 0})`;
+
+      // Sólo avisamos a React cuando cambia la cantidad de puntos encendidos.
+      const count = nodeCenters.filter((center) => shown >= center).length;
+      if (count !== lastCount) {
+        lastCount = count;
+        setFilledCount(count);
+      }
+
+      // Seguimos animando hasta alcanzar el objetivo.
+      if (shown !== target) frame = requestAnimationFrame(tick);
+      else lastTime = 0;
     };
 
     // Un cálculo por cuadro como máximo
     const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(update);
+      if (!frame) frame = requestAnimationFrame(tick);
     };
 
-    update();
+    // ResizeObserver detecta cambios de tamaño del contenedor (ventana,
+    // fuentes que terminan de cargar, textos que cambian de línea...).
+    const resizeObserver = new ResizeObserver(() => {
+      measureNodes();
+      schedule();
+    });
+    resizeObserver.observe(container);
+
+    measureNodes();
+    tick(performance.now()); // cálculo inicial sin esperar a que el usuario haga scroll
+    // passive: true le dice al navegador que no llamaremos preventDefault,
+    // lo que permite un scroll más fluido.
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
 
     return () => {
       if (frame) cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
@@ -94,12 +170,17 @@ export default function InstitutionalTimeline() {
           <div className="absolute bottom-0 left-[24px] top-0 w-px -translate-x-1/2 bg-gray-200 md:left-1/2" />
           
           {/* LÍNEA DE PROGRESO */}
-          <div 
-            className="absolute left-[24px] top-0 w-px -translate-x-1/2 bg-primary md:left-1/2"
-            style={{ height: `${lineHeight}px` }}
+          {/* Mide lo mismo que la gris y se "encoge" con scaleY desde arriba
+              (origin-top). El translateX va en el style porque el efecto
+              sobrescribe `transform` completo. */}
+          <div
+            ref={lineRef}
+            className="absolute bottom-0 left-[24px] top-0 w-px origin-top bg-primary will-change-transform md:left-1/2"
+            style={{ transform: "translateX(-50%) scaleY(0)" }}
           />
 
           {timelineData.map((item, index) => {
+            // En escritorio los eventos alternan lado: pares a la izquierda, impares a la derecha.
             const isEven = index % 2 === 0;
             const isFilled = index < filledCount;
             const isLast = index === timelineData.length - 1;
@@ -111,6 +192,8 @@ export default function InstitutionalTimeline() {
               >
                 
                 {/* NODO CENTRAL */}
+                {/* "Callback ref": React llama a esta función con el elemento
+                    del DOM y lo guardamos en la posición `index` del arreglo. */}
                 <div
                   ref={(el) => (nodeRefs.current[index] = el)}
                   className={`absolute left-[24px] z-10 flex h-3 w-3 -translate-x-1/2 items-center justify-center border bg-surface transition-colors duration-200 md:left-1/2 ${

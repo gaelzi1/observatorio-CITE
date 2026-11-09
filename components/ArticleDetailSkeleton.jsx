@@ -1,3 +1,5 @@
+// Silueta de carga de la página de detalle de un artículo.
+// La usa app/articles/[slug]/loading.jsx mientras el servidor prepara la página.
 export default function ArticleDetailSkeleton() {
   return (
     // Contenedor principal con padding adaptativo (móvil, tablet, desktop)

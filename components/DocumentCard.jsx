@@ -1,3 +1,5 @@
+import { CircleUser } from "lucide-react";
+
 const ACTION_LABELS = {
   article: "Leer artículo",
   book: "Ver libro",
@@ -9,6 +11,9 @@ const ACTION_LABELS = {
   other: "Ver recurso",
 }; 
 
+// Elemento de la lista de la biblioteca (imagen + datos + enlace).
+// En lugar de recibir `article` entero, recibe cada dato como una prop
+// separada; Library.jsx se las pasa con {...article} (operador spread).
 export default function DocumentCard({
   id,
   title,
@@ -20,6 +25,7 @@ export default function DocumentCard({
   author,
   typeOfComponent,
 }) {
+  // El texto del enlace cambia según el tipo ("Ver libro", "Ver tesis"...).
   const buttonText = ACTION_LABELS[typeOfComponent] || "Ver recurso";
   
   // 1. Creamos el formateador de la fecha
@@ -72,21 +78,7 @@ export default function DocumentCard({
         </div> 
 
         <p className="mt-2 flex items-center gap-2 text-sm text-secondary">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 text-primary"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-          
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5.121 17.804A9 9 0 1118.88 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0zm-9 9a6 6 0 1112 0H6z"
-            />
-          </svg>
+          <CircleUser className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
 
           <span className="font-medium text-primary">Autor:</span>
           <span>{author || "Desconocido"}</span>

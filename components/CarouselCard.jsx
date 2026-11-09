@@ -1,3 +1,4 @@
+// Traduce el tipo guardado en la BD (en inglés) a la etiqueta que se muestra.
 const TYPE_LABELS = {
   article: "ARTÍCULO",
   journal_article: "REVISTA CIENTÍFICA",
@@ -9,13 +10,18 @@ const TYPE_LABELS = {
   other: "RECURSO",
 };
 
+// Tarjeta de un artículo dentro del carrusel. Recibe el artículo completo
+// como prop y muestra imagen, tipo, categoría y título.
 export default function CarouselCard({ article }) {
+  // Si no llega artículo, no pintamos nada (evita errores al leer propiedades).
   if (!article) return null;
 
   const tipo = TYPE_LABELS[article.typeOfComponent] || "RECURSO";
   const categoria = article.category ? article.category.toUpperCase() : "GENERAL";
 
   return (
+    // Toda la tarjeta es un enlace. La clase `group` permite que los hijos
+    // reaccionen al hover del padre (group-hover:scale-[1.03] en la imagen).
     <a
       href={`/articles/${article.slug}`}
       className="group relative flex h-[320px] w-full flex-col overflow-hidden rounded-xl border border-gray-200 transition-shadow duration-300 hover:shadow-lg sm:h-[360px]"

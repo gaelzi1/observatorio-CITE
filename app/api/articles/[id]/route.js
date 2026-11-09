@@ -1,3 +1,14 @@
+// =============================================================================
+// app/api/articles/[id]/route.js — Un artículo concreto  →  /api/articles/:id
+// -----------------------------------------------------------------------------
+// Los corchetes en el nombre de la carpeta ([id]) crean un SEGMENTO DINÁMICO:
+// /api/articles/abc123 y /api/articles/mi-slug llegan aquí, y el valor de la
+// URL se recibe en `params.id`.
+//   GET    → obtiene un artículo por slug o por _id
+//   PUT    → lo actualiza (sólo admin)
+//   DELETE → lo elimina (sólo admin)
+// =============================================================================
+
 import { NextResponse } from "next/server";
 import Article from "@/models/Article";
 import dbConnect from "@/lib/mongodb";
@@ -5,10 +16,13 @@ import { createUniqueSlug, parseAuthors, pickApaFields } from "@/lib/articles";
 import { getAdminSession } from "@/lib/auth";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
+// El segundo argumento trae `params` con los segmentos dinámicos de la URL.
 export async function GET(request, { params }) {
   try {
     await dbConnect();
 
+    // En versiones nuevas de Next.js `params` es una promesa; Promise.resolve
+    // hace que funcione tanto si es promesa como si es un objeto normal.
     const resolvedParams = await Promise.resolve(params);
     const identifier = resolvedParams.slug || resolvedParams.id;
 
@@ -79,6 +93,8 @@ export async function PUT(request, { params }) {
     // El slug no cambia al editar para no romper enlaces ya compartidos
     const finalSlug = existingArticle.slug || (await createUniqueSlug(body.title, id));
 
+    // returnDocument: "after" → devuelve el artículo YA actualizado.
+    // runValidators: true     → aplica las reglas del Schema también al editar.
     const updatedArticle = await Article.findByIdAndUpdate(
       id,
       {
@@ -98,12 +114,14 @@ export async function PUT(request, { params }) {
         runValidators: true,
       }
     );
+    // Limpia la caché para que el cambio se vea en todo el sitio.
     revalidateTag("articles");
     revalidatePath("/", "layout");
 
     return NextResponse.json(updatedArticle, { status: 200 });
   } catch (error) {
     console.error("Error en PUT /api/articles/[id]:", error);
+    // CastError ocurre cuando el id no tiene formato válido de ObjectId.
     if (error.name === "ValidationError" || error.name === "CastError") {
       return NextResponse.json({ message: error.message }, { status: 400 });
     }
@@ -114,6 +132,7 @@ export async function PUT(request, { params }) {
   }
 }
 
+// DELETE /api/articles/:id — sólo acepta el _id de MongoDB (no el slug).
 export async function DELETE(request, { params }) {
   const adminSession = await getAdminSession();
   if (!adminSession) {
