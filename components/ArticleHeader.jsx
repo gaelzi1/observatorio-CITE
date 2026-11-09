@@ -13,6 +13,10 @@ const TYPE_LABELS = {
   other: "Otro",
 };
 
+// Cabecera del artículo: etiquetas, descripción, autor, fecha, tiempo de
+// lectura y botones para compartir. No tiene "use client": se renderiza en el
+// servidor. ShareButtons sí es de cliente; un Server Component puede incluir
+// Client Components sin problema (al revés no se puede importar).
 export default function ArticleHeader({
   article,
   articleAuthor,
@@ -65,6 +69,7 @@ export default function ArticleHeader({
             </span>
           )}
 
+          {/* El separador "•" sólo aparece si hay algo a ambos lados. */}
           {articleAuthor && (dateLabel || readingMinutes) && (
            
             <span className="hidden text-gray-300 sm:inline">•</span>

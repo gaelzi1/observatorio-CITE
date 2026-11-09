@@ -4,26 +4,34 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
+// Formulario de inicio de sesión. Client Component porque guarda lo que se
+// escribe en el estado y reacciona a los clics.
 export default function LoginForm() {
   const router = useRouter();
+  // Un useState por cada dato que cambia en pantalla.
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // ojo para ver la contraseña
+  const [error, setError] = useState("");                  // mensaje de error a mostrar
+  const [loading, setLoading] = useState(false);           // mientras se espera al servidor
 
   async function handleSubmit(e) {
+    // Sin esto, el <form> recargaría la página al enviarse.
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
+      // Enviamos las credenciales a la ruta de API (app/api/login/route.js).
+      // Si son correctas, el servidor responde con la cookie de sesión.
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
+      // res.ok es true para códigos 200-299. fetch NO lanza error con 401 o
+      // 500, por eso hay que revisarlo a mano.
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "Correo o contraseña incorrectos");
@@ -101,6 +109,8 @@ export default function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg border bg-surface py-2.5 pl-10 pr-11 text-gray-900 outline-none transition focus:border-focus focus:ring-2 focus:ring-cite-turquesa/30"
             />
+            {/* type="button" para que no envíe el formulario. (v) => !v invierte
+                el valor anterior: true → false → true... */}
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}

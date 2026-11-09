@@ -1,5 +1,11 @@
 import Image from "next/image";
 
+// Sección de bienvenida (franja grande con logo y textos).
+// Componente "de presentación": sólo muestra lo que recibe por props, así se
+// reutiliza en varias páginas con textos distintos. `logo` tiene valor por
+// defecto si no se pasa.
+// (Nota: app/page.js le pasa `backgroundColor`, pero aquí no se usa; el color
+// viene de la clase bg-cite-teal.)
 export default function Hero({
   title,
   subtitle,

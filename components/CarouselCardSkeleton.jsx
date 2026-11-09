@@ -1,3 +1,6 @@
+// Silueta gris de una tarjeta del carrusel mientras cargan los datos.
+// Imita la forma de CarouselCard para que la página no "salte" al aparecer
+// el contenido real. `animate-pulse` de Tailwind produce el parpadeo suave.
 export default function CarouselCardSkeleton() {
   return (
     <div className="relative flex h-[320px] w-full animate-pulse flex-col overflow-hidden rounded-xl border border-gray-200 sm:h-[360px]">

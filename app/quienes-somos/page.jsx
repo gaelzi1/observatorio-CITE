@@ -2,6 +2,8 @@ import Banner from '@/components/Banner'
 import Image from 'next/image'
 import Link from 'next/link'
 
+// Página estática en /quienes-somos (el nombre de la carpeta es la URL).
+// Nota: Image y Link se importan pero aún no se usan.
 export default function Page() {
     return (
         <main>

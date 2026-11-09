@@ -1,9 +1,19 @@
+// =============================================================================
+// Banner — Cabecera del sitio público (logo + menú de navegación)
+// -----------------------------------------------------------------------------
+// Client Component porque reacciona al usuario: abre/cierra el menú móvil,
+// los submenús, escucha clics fuera y la tecla Escape.
+// =============================================================================
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+// usePathname devuelve la ruta actual (p. ej. "/quienes-somos"); sirve para
+// resaltar en el menú la página en la que estamos.
 import { usePathname } from "next/navigation";
+import { ChevronDown, Menu, X } from "lucide-react";
 
 /* ---------------------------------------------------------------
    Menú del banner. Para agregar o cambiar opciones edite solo esta lista.
@@ -22,25 +32,22 @@ const GRIS = "#D6D6D6";
 
 /* Detecta si la pantalla es de escritorio (menú con hover) o móvil (acordeón).
    Empieza en false para que el render del servidor y el del cliente coincidan. */
+/* Es un hook personalizado declarado en el mismo archivo (empieza con "use"). */
 function useEscritorio(query = "(min-width: 1280px)") {
   const [ok, setOk] = useState(false);
   useEffect(() => {
     const m = window.matchMedia(query);
     const fn = () => setOk(m.matches);
-    fn();
+    fn(); // valor real en cuanto el componente aparece en el navegador
     m.addEventListener("change", fn);
     return () => m.removeEventListener("change", fn);
   }, [query]);
   return ok;
 }
 
+/* Flecha que gira 180° cuando el submenú está abierto. */
 function Chevron({ abierto }) {
-  return (
-    <svg viewBox="0 0 20 20" className={`h-4 w-4 shrink-0 transition-transform ${abierto ? "rotate-180" : ""}`} fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 8l5 5 5-5" />
-    </svg>
-  );
+  return <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${abierto ? "rotate-180" : ""}`} aria-hidden="true" />;
 }
 
 export default function Banner() {
@@ -48,10 +55,12 @@ export default function Banner() {
   const [movil, setMovil] = useState(false); // menú hamburguesa abierto
   const escritorio = useEscritorio();
   const ruta = usePathname();
+  // `ref` apunta al <header> para saber si un clic ocurrió dentro o fuera de él.
   const ref = useRef(null);
 
   // Cerrar con clic fuera o con Escape
   useEffect(() => {
+    // .contains() dice si el elemento clicado está dentro del <header>.
     const fuera = (e) => { if (!ref.current?.contains(e.target)) setAbierto(null); };
     const esc = (e) => { if (e.key === "Escape") setAbierto(null); };
     document.addEventListener("mousedown", fuera);
@@ -62,7 +71,8 @@ export default function Banner() {
     };
   }, []);
 
-  const alClic = (i) => setAbierto(escritorio ? i : abierto === i ? null : i);
+  // En escritorio el clic siempre abre; en móvil alterna (abre/cierra).
+  const alClic = (i) =>setAbierto(escritorio ? i : abierto === i ? null : i);
 
   return (
     <header ref={ref} className="w-full">
@@ -85,17 +95,18 @@ export default function Banner() {
       {/* Barra turquesa */}
       <nav className="bg-cite-turquesa" aria-label="Principal">   <div className="w-full px-6 xl:px-[50px]">
           {/* Botón hamburguesa (solo en pantallas menores a xl) */}
+          {/* aria-expanded informa a lectores de pantalla si el menú está abierto. */}
           <button
             onClick={() => setMovil(!movil)}
             aria-expanded={movil}
             className="flex h-12 w-full items-center justify-between text-sm font-medium uppercase text-white xl:hidden"
           >
             Menú
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d={movil ? "M6 6l12 12M18 6L6 18" : "M4 7h16M4 12h16M4 17h16"} />
-            </svg>
+            {movil ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
           </button>
 
+          {/* Clases dinámicas con template string: en móvil se muestra sólo si
+              `movil` es true; en xl (escritorio) siempre se muestra en fila. */}
           <ul className={`${movil ? "flex" : "hidden"} flex-col xl:flex xl:flex-row xl:flex-wrap`}>
             {MENU.map((item, i) => {
               const esAbierto = abierto === i;

@@ -1,9 +1,19 @@
 import Link from "next/link";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { getPublishedArticleBySlug } from "@/lib/articles";
 import { generateAPA } from "@/lib/citations";
 import ArticleAPA from "./ArticleAPA";
 import ArticleHeader from "./ArticleHeader";
 
+// =============================================================================
+// ArticleDetail — Contenido completo de un artículo
+// -----------------------------------------------------------------------------
+// Es un SERVER COMPONENT ASÍNCRONO (`async function`, sin "use client"):
+// puede hacer `await` y consultar la base de datos directamente, sin fetch ni
+// useEffect. El navegador recibe el HTML ya listo, lo que es más rápido y
+// mejor para SEO. Sólo las partes interactivas (copiar cita, compartir) son
+// Client Components.
+// =============================================================================
 export default async function ArticleDetail({slug}) {
   if (!slug) return null;
   
@@ -14,7 +24,7 @@ export default async function ArticleDetail({slug}) {
     if (!article) {
       return (
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-6 py-24 text-center">
-          <span className="text-3xl">⚠️</span>
+          <AlertTriangle className="h-9 w-9 text-accent" strokeWidth={1.5} aria-hidden="true" />
           <p className="text-lg font-medium text-primary">Artículo no encontrado</p>
           <Link 
             href="/recursos-informativos" 
@@ -27,7 +37,9 @@ export default async function ArticleDetail({slug}) {
       );
     }
 
+    // Calculamos todo en el servidor y lo pasamos ya listo a los hijos.
     const citation = generateAPA(article);
+    // `article.autor` es un respaldo para artículos antiguos con el campo en español.
     const articleAuthor = article.author || article.autor;
 
     // Fecha de publicación del recurso; si no tiene, la de alta en el sitio.
@@ -37,8 +49,11 @@ export default async function ArticleDetail({slug}) {
       ? new Date(displayDate).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })
       : "";
 
+    // Si no hay contenido, usamos la descripción como cuerpo.
     const bodyText = (article.content?.trim() ? article.content : article.description) || "";
+    // Separa el texto en párrafos donde haya una línea en blanco.
     const paragraphs = bodyText ? bodyText.split(/\n\s*\n/) : [];
+    // Tiempo de lectura estimado: palabras / 200 por minuto (mínimo 1).
     const readingMinutes = Math.max(1, Math.round(bodyText.trim().split(/\s+/).length / 200));
 
   return (
@@ -48,7 +63,7 @@ export default async function ArticleDetail({slug}) {
         <div className="mb-8 flex justify-center md:mb-10 md:justify-start">
           {/* Unificado: text-muted y hover:text-primary */}
           <Link href="/recursos-informativos" className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-primary">
-            <span aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
+            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" aria-hidden="true" />
             Volver a recursos
           </Link>
         </div>
@@ -78,6 +93,8 @@ export default async function ArticleDetail({slug}) {
         {/* CUERPO DEL ARTÍCULO */}
         {/* Unificado: prose-p:text-secondary en lugar de prose-p:text-neutral-700 */}
         <article className="prose prose-neutral mx-auto max-w-none prose-p:text-lg prose-p:leading-8 prose-p:text-secondary">
+          {/* Usar el índice como `key` está bien aquí porque la lista no se
+              reordena ni cambia en pantalla. En listas que cambian, usa un id. */}
           {paragraphs.map((paragraph, index) => (
             <p key={index} className="mb-6">{paragraph}</p>
           ))}

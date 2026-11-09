@@ -1,5 +1,14 @@
+// =============================================================================
+// articleFormConfig.js — Configuración del formulario de recursos
+// -----------------------------------------------------------------------------
+// Sólo datos, sin JSX. Separar la configuración de la vista permite cambiar
+// opciones o campos sin tocar el componente del formulario.
+// =============================================================================
+
 import { APA_FIELDS } from "@/lib/articleFields";
 
+// Opciones del selector "Tipo de recurso": value = lo que se guarda en la BD,
+// label = lo que ve el usuario.
 export const TYPE_OPTIONS = [
   { value: "article", label: "Artículo general" },
   { value: "journal_article", label: "Artículo de revista científica" },
@@ -11,6 +20,8 @@ export const TYPE_OPTIONS = [
   { value: "other", label: "Otro recurso" },
 ];
 
+// Mismo dato en forma de "diccionario" para buscar rápido una etiqueta:
+// TYPE_LABELS["book"] → "Libro"
 export const TYPE_LABELS = Object.fromEntries(TYPE_OPTIONS.map((t) => [t.value, t.label]));
 
 // Campos de citación APA que se muestran según el tipo de recurso.
@@ -44,6 +55,9 @@ export const APA_FIELDS_BY_TYPE = {
   ],
 };
 
+// Valores iniciales del formulario. Todos son "" (no undefined) porque un
+// input controlado necesita siempre un valor de texto.
+// La última línea agrega todos los campos APA vacíos: { journalName: "", ... }.
 export const EMPTY_FORM = {
   title: "",
   author: "",
@@ -65,6 +79,8 @@ export function articleToForm(article) {
   form.author = Array.isArray(article.author)
     ? article.author.join("; ") // Punto y coma: las comas son parte de "Apellido, N."
     : article.author || "";
+  // La API manda fechas ISO ("2025-03-10T00:00:00.000Z"); el input date
+  // necesita sólo "2025-03-10".
   form.dateOfPublication = article.dateOfPublication
     ? new Date(article.dateOfPublication).toISOString().split("T")[0]
     : "";

@@ -1,5 +1,19 @@
-import { useEffect, useState } from "react";
+// =============================================================================
+// LibraryFilters — Controles de filtrado de la biblioteca
+// -----------------------------------------------------------------------------
+// No tiene "use client" pero usa hooks. Funciona porque sólo lo importa
+// Library.jsx, que sí es de cliente: todo lo que importa un Client Component
+// también se ejecuta en el cliente. (Agregar "use client" aquí lo haría más
+// explícito y evitaría errores si algún día lo importa un Server Component.)
+//
+// Casi todo el estado vive en el padre (Library). Este componente recibe los
+// valores actuales y las funciones handleXxxChange para avisar de cambios.
+// =============================================================================
 
+import { useEffect, useState } from "react";
+import { Search, X } from "lucide-react";
+
+// "Chip" (etiqueta) de un filtro activo con una X para quitarlo.
 function Chip({ label, onRemove }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
@@ -10,20 +24,7 @@ function Chip({ label, onRemove }) {
         aria-label={`Quitar filtro ${label}`}
         className="text-primary/60 transition-colors hover:text-accent"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-3 w-3"
-          aria-hidden="true"
-        >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>
+        <X className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
       </button>
     </span>
   );
@@ -46,12 +47,18 @@ export default function LibraryFilters({
   hasActiveFilters,
   clearFilters,
 }) {
+  // Estado LOCAL para el input de autor: guarda lo que se va escribiendo y sólo
+  // se manda al padre al pulsar Enter o el botón (igual que el buscador).
   const [localAuthor, setLocalAuthor] = useState(author || "");
 
+  // Si el padre cambia `author` (p. ej. al "Limpiar filtros"), sincronizamos
+  // el input local para que también se vacíe.
   useEffect(() => {
     setLocalAuthor(author || "");
   }, [author]);
 
+  // (Esta lista no cambia; podría declararse fuera del componente para no
+  // recrearla en cada render, aunque el efecto en rendimiento es mínimo.)
   const SORT_OPTIONS = [
     { value: "recent", label: "Más recientes" },
     { value: "oldest", label: "Más antiguos" },
@@ -59,6 +66,8 @@ export default function LibraryFilters({
     { value: "title_desc", label: "Título Z-A" },
   ];
 
+  // Etiquetas legibles para los chips. `.find()` devuelve el primer elemento
+  // que cumple la condición; `?.` evita error si no encuentra nada.
   const currentTypeLabel =
     resourceTypes?.find((t) => t.id === typeFilter)?.label || typeFilter;
   const currentSortLabel =
@@ -132,20 +141,7 @@ export default function LibraryFilters({
                 sm:py-1.5
               "
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-3.5 w-3.5"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="6" />
-                <path d="m16 16 4 4" />
-              </svg>
+              <Search className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -255,6 +251,7 @@ export default function LibraryFilters({
             "
           >
             <option value="">Todos</option>
+            {/* Genera los últimos 15 años: [2026, 2025, 2024, ...]. */}
             {Array.from(
               { length: 15 },
               (_, i) => new Date().getFullYear() - i
@@ -326,6 +323,7 @@ export default function LibraryFilters({
         )}
       </div>
 
+      {/* Resumen de filtros aplicados; cada chip quita su filtro al pulsar la X. */}
       {hasActiveFilters && (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <span className="shrink-0 text-xs font-medium text-muted">

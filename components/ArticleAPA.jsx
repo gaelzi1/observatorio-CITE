@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 
+// Caja con la referencia APA y un botón para copiarla.
+// Es Client Component porque usa estado (copied) y el portapapeles del
+// navegador (navigator.clipboard), que no existe en el servidor.
+// La cita ya viene calculada desde ArticleDetail (servidor) como prop.
 export default function ArticleAPA({ citation }) {
+  // true durante 2 s después de copiar, para mostrar "¡Copiada!".
   const [copied, setCopied] = useState(false);
 
   const copyCitation = async () => {
@@ -16,6 +21,7 @@ export default function ArticleAPA({ citation }) {
       await navigator.clipboard.writeText(plainText);
       setCopied(true);
 
+      // Pasados 2 segundos, volvemos al estado normal del botón.
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Error al copiar la cita:", error);

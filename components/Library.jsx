@@ -1,12 +1,25 @@
+// =============================================================================
+// Library — Biblioteca pública con buscador, filtros y paginación
+// -----------------------------------------------------------------------------
+// Este componente es el "padre" que guarda TODO el estado (búsqueda, filtros,
+// página, resultados). Sus hijos (LibraryFilters, LibraryPagination,
+// DocumentCard) sólo reciben valores y funciones por props.
+//
+// Flujo: el usuario cambia un filtro → se actualiza el estado → el useEffect
+// detecta el cambio → pide los datos a /api/articles → se pintan resultados.
+// =============================================================================
+
 "use client";
 
 import { useEffect, useState } from "react";
 import DocumentCard from "./DocumentCard";
-import LibraryFilters from "./LibraryFilters";
+  import LibraryFilters from "./LibraryFilters";
 import LibraryPagination from "./LibraryPagination";
 
+// Resultados por página.
 const LIMIT = 6;
 
+// Opciones del filtro "Tipo de recurso". id "" significa "sin filtro".
 const CONTENT_TYPES = [
   { id: "", label: "Todos los recursos" },
   { id: "article", label: "Artículos" },
@@ -20,6 +33,10 @@ const CONTENT_TYPES = [
 ];
 
 export default function Library() {
+  // Dos estados para la búsqueda:
+  //   query  → lo que se va escribiendo en el input (cambia con cada tecla).
+  //   search → lo que realmente se busca (sólo cambia al pulsar Buscar/Enter).
+  // Así no se hace una petición a la API por cada letra escrita.
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
 
@@ -28,6 +45,8 @@ export default function Library() {
 
   const [categories, setCategories] = useState([]);
   const [author, setAuthor] = useState("");
+  // (Nota: `authors` nunca se llena con setAuthors; se pasa a LibraryFilters
+  // pero allí no se usa. Se puede eliminar o implementar más adelante.)
   const [authors, setAuthors] = useState([]);
   const [year, setYear] = useState("");
 
@@ -40,6 +59,7 @@ export default function Library() {
 
   const [typeFilter, setTypeFilter] = useState("");
 
+  // Efecto 1: carga las categorías UNA vez al montar (dependencias []).
   useEffect(() => {
     async function loadFilters() {
       try {
@@ -54,7 +74,12 @@ export default function Library() {
     loadFilters();
   }, []);
 
+  // Efecto 2: carga los artículos cada vez que cambia algún filtro o la
+  // página (ver el arreglo de dependencias al final del efecto).
   useEffect(() => {
+    // AbortController permite CANCELAR una petición en curso. Si el usuario
+    // cambia de filtro rápido, la limpieza del efecto aborta la petición
+    // anterior para que una respuesta vieja no pise a la nueva.
     const controller = new AbortController();
 
     async function loadArticles() {
@@ -62,6 +87,8 @@ export default function Library() {
       setError(null);
 
       try {
+        // URLSearchParams arma el texto "?page=1&limit=6&sort=recent..." de
+        // forma segura (escapa espacios y caracteres especiales).
         const params = new URLSearchParams({ page: currentPage, limit: LIMIT, sort });
 
         if (search) params.set("q", search);
@@ -82,6 +109,7 @@ export default function Library() {
         setDocumentos(data.data || []);
         setTotalPages(data.totalPages || 1);
       } catch (err) {
+        // Una petición cancelada a propósito no es un error real.
         if (err.name !== "AbortError") {
           setError("No se pudo cargar la biblioteca. Verifica la conexión a MongoDB.");
         }
@@ -94,6 +122,8 @@ export default function Library() {
     return () => controller.abort();
   }, [search, category, author, sort, year, typeFilter, currentPage]);
 
+  // Manejadores: cada cambio de filtro regresa a la página 1, porque la
+  // página actual podría no existir con los nuevos resultados.
   const handleSearch = () => { setCurrentPage(1); setSearch(query.trim()); };
   const handleKeyDown = (e) => { if (e.key === "Enter") handleSearch(); };
   const handleCategoryChange = (val) => { setCategory(val); setCurrentPage(1); };
@@ -157,6 +187,9 @@ export default function Library() {
       </div>
 
       <div className="mb-6 w-full sm:mb-8">
+        {/* Pasamos a los filtros los valores actuales y las funciones para
+            cambiarlos. El hijo no modifica el estado directamente: llama a
+            estas funciones y el padre decide. */}
         <LibraryFilters
           author={author}
           authors={authors}
@@ -177,6 +210,8 @@ export default function Library() {
       </div>
 
       <div className="w-full">
+        {/* Cuatro estados posibles, cada uno con su condición:
+            cargando · error · sin resultados · con resultados. */}
         {loading && (
           <div className="flex w-full items-center justify-center py-12">
             <p className="text-sm text-muted">

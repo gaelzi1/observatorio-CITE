@@ -1,3 +1,10 @@
+// =============================================================================
+// app/api/categories/route.js  →  GET /api/categories
+// -----------------------------------------------------------------------------
+// Devuelve la lista de categorías distintas que existen en los artículos
+// publicados (para llenar el filtro de categorías de la biblioteca).
+// =============================================================================
+
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import dbConnect from "@/lib/mongodb";
@@ -10,13 +17,17 @@ export async function GET() {
     // 1. Envolvemos la consulta directa a MongoDB en caché estricta
     const getCachedCategories = unstable_cache(
       async () => {
+        // distinct() devuelve los valores únicos de un campo.
+        // `$nin` = "not in": excluye categorías nulas o vacías.
         const uniqueCategories = await Article.distinct("category", {
           category: { $nin: [null, ""] },
           published: { $ne: false }, // Las categorías de borradores no se muestran
         });
+        // localeCompare ordena alfabéticamente respetando acentos y la ñ.
         return uniqueCategories.sort((a, b) => a.localeCompare(b));
       },
-      ['categories-cache-global'], 
+      // Llave de la caché (única para esta consulta) y opciones de invalidación.
+      ['categories-cache-global'],
       { revalidate: 3600, tags: ["articles"] }
     );
 
